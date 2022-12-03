@@ -30,11 +30,11 @@ class Set {
     get list() { return Object.keys(this.l); }
 }
 class Backend {
-    cache = {}
     lists = {}
+    artCache = {}
     constructor() {
         // Load all keys on game start
-        this.ajax("/getAllIds", {}).then(r => r.keys.forEach(this.see.bind(this)));
+        this.ajax("/things", {}).then(r => r.ids.forEach(this.see.bind(this)));
     }
     getList(type) { return this.lists[type] = this.lists[type] || new Set(); }
     async ajax(url, data) {
@@ -46,6 +46,9 @@ class Backend {
                 dataType: 'json',
                 contentType: 'application/json',
                 success: success,
+                failure: (r) => {
+                    debug(r.error);
+                }
             });
         })
     }
@@ -54,18 +57,19 @@ class Backend {
         const type = splitId(id).type;
         this.getList(type).add(id);
     }
-    async save(thing) {
-        this.see(thing.id)
-        this.cache[thing.id] = thing;
-        await this.ajax("/store", thing);
+    async move(thingId, toPlaceId) {
+        await this.ajax("/move", { thingId, toPlaceId });
     }
-    async get(id) {
-        this.see(id)
-        if (!this.cache[id]) {
-            this.cache[id] = (await this.ajax("/get", {key:id})).value;
-        }
-        const val = this.cache[id];
-        return val;
+    async create(thing) {
+        this.see(thing.id);
+        await this.ajax("/create", thing);
+    }
+    async get(thingId) {
+        this.see(thingId);
+        this.artCache[thingId] = this.artCache[thingId] || this.ajax("/art", {thingId});
+        const thing = (await this.ajax("/get", {thingId})).thing;
+        thing.pictureUrl = (await this.artCache[thingId]).pictureUrl;
+        return thing;
     }
 }
 
@@ -145,78 +149,56 @@ class Game {
         }
         thing.pictureUrl = await this.ui.draw(thing.name);
 
-        if (thing.type != "place") {
-            if (!thing.placeId) thing.placeId = this.player.placeId;
-            await this.create(thing, thing.placeId); // Saves
-        }
+        if (thing.type != "place" && !thing.placeId) thing.placeId = this.player.placeId;
 
-        await this.backend.save(thing)
+        await this.backend.created(thing); // data update
+        this.created(thing, thing.placeId); // visual update. no 'await' deliberately
+            
         this.craftBtn.show();
         return thing;
     }
-    async create(thing, placeId) { // Saves
-        if (thing.placeId != placeId) debug("Thing created in wrong place");
+    async created(thing) { // Visual update
+        const placeId = thing.placeId;
+        if (thing.type == "place") return;
 
         // Display new objects locally immediately. Everyone else has to leave and come back
-        if (this.player && this.player.placeId == placeId && thing != this.player) {
-            this.ui.displayThing(thing);
-        }
-        const place = await this.backend.get(placeId);
-        if (place)  {
-            place.contents.push(thing.id);
-            await this.backend.save(place);
-        } else {
-            // Could make it on the fly
-            if (this.player) debug("Thing created in place that doesn't exist yet");
-        }
-        if (thing == this.player) this.playerArrived();
-        await this.backend.save(thing)
-    }
-    async move(thing, placeId) { // Saves
-        if (thing.placeId) {
-            // Remove code
-            const place = await this.backend.get(thing.placeId);
-            if (place) {
-                place.contents.splice(place.contents.indexOf(thing.id), 1); // remove thing
-                await this.backend.save(place);
-            }
-        }
-        thing.placeId = placeId;
-        await this.create(thing, placeId);
+        if (!this.player || thing == this.player) {} // Part of making the player at the beginning, ignore
+        else if (this.player.placeId == placeId) await this.ui.displayThing(thing);
     }
 
     async craftMissing(id) {
         return await this.craft(splitId(id)); // name, type
     }
+    async playerMove(placeId) {
+        this.place = await this.backend.get(placeId) || await this.craftMissing(placeId);
+        this.backend.move(this.player, placeId);
+        this.playerArrived();
+    }
     async playerArrived() {
-        let placeId = this.player.placeId;
-        this.place = await this.backend.get(placeId)
-        if (!this.place) {
-            this.place = await this.craftMissing(placeId);
-            this.create(this.player, placeId);
-        }
         this.ui.clear();
         this.ui.mention(`You are in ${this.place.name}.`);
 
         await this.ui.displayThing(this.place);
         this.ui.mention("Things here include: ");
+        const thingPromises = [];
         for (let thingId of this.place.contents) {
-            const thing = await this.backend.get(thingId);
+            thingPromises.push(this.backend.get(thingId));
+        }
+        for (let thing of await Promise.all(thingPromises)) {
             if (thing) {
                 await this.ui.displayThing(thing);
             } else debug("Thing is here but not created");
         }
     }
     async onAction(thing, action) {
-        if (action == "movePlayer") {
-            this.move(this.player, thing.targetId);
-            this.playerArrived();
-        }
-
+        if (action == "movePlayer") this.playerMove(thing.targetId);
     }
     async run() {
         const yourId = `person ${window.userId}`;
-        this.player = await this.backend.get(yourId) || await this.craft({type: "person", placeId: "place the first room", name: window.userId})
+        const firstRoomId = "place the first room";
+        //const firstRoom = await this.backend.get(firstRoomId) || await this.craft({type: "place", name: splitId(firstRoomId).name}); // Needed for the very first player only.
+        this.player = await this.backend.get(yourId) || await this.craft({type: "person", placeId: firstRoomId, name: window.userId});
+        this.place = await this.backend.get(this.player.placeId) || await this.craftMissing(this.player.placeId);
         this.playerArrived();
 
         // Wait for actions, then do stuff. All async.

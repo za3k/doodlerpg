@@ -2,8 +2,8 @@
 import flask, flask_login
 from flask import url_for, request, render_template, redirect, send_from_directory
 from flask_login import current_user
-import json, random, hashlib, functools, string
-from db import DBDict
+import json, random, hashlib, functools, string, re
+from db import DBDict, db_dicts
 
 PREFIX="/doodlerpg"
 app = flask.Flask(__name__,
@@ -29,6 +29,7 @@ class User(flask_login.UserMixin):
         # TODO: Prevent name collision with existing game object
         # TODO: 'normal' characters only
         # TODO: Allow editing your artwork
+        # TODO: Salt and hash passwords
         if username in users:
             if password == users[username]['password']:
                 return user
@@ -72,6 +73,9 @@ def index():
     return send_from_directory('static', "index.html")
 
 # -- Ajax helper ---
+class UserError(Exception):
+    def __init__(self, reason):
+        self.error = reason
 def ajax(route):
     def x(f, r=route):
         @functools.wraps(f)
@@ -79,32 +83,124 @@ def ajax(route):
             if not flask.request.is_json:
                 return "Invalid JSON", 400
             query = flask.request.get_json()
-            return f(query, *a, **kw)
+            if app.config["DEBUG"]:
+                # Add realistic delay
+                import time
+                time.sleep(0.5)
+            try:
+                return f(query, *a, **kw)
+                r = f(*args)
+                r["success"] = True
+                return r
+            except UserError as e:
+                return { "success": False, "error": e.error }, 501
         #print(r)
         return app.route(r, methods=["POST"])(app.route(PREFIX+r, methods=["POST"])(f2))
     return x
 app.ajax = ajax
 
+
 # --- Game ---
 objects = DBDict("object")
+ALLOWED_PUNCTUATION = "-'\"!@#$%&*()=|;:,.?/" # Keep - at the beginning for regex
+name_regex = re.compile(r"[{}a-zA-Z0-9 ]{{1,100}}".format(ALLOWED_PUNCTUATION))
 
-@app.ajax("/store")
-def store(j):
-    # TODO: 'normal' characters only
-    # TODO: separate movement from creation
-    key = j["id"]
-    value = j
-    objects[key] = value
-    return {"key":key, "value": value}
+class InvalidMove(UserError): pass
+class InvalidGet(UserError): pass
+class InvalidCreate(UserError): pass
+
+def add_to(placeId, thingId):
+    place = objects.get(placeId)
+    if not place:
+        raise InvalidMove("Thing moved to place that doesn't exist")
+    if thingId not in place["contents"]:
+        place["contents"].append(thingId)
+    objects[placeId] = place
+def remove_from(placeId, thingId):
+    place = objects.get(placeId)
+    if not place:
+        raise InvalidMove("Thing removed from place that doesn't exist")
+    if thingId in place["contents"]:
+        place["contents"].remove(thingId)
+        objects[placeId] = place
+    else:
+        #raise InvalidMove("Thing removed from place, but it's not in the place")
+        pass
+def move(thingId, toPlaceId):
+    print(thingId)
+    thing = objects.get(thingId)
+    if not thing:
+        raise InvalidMove("Tried to move a thing that doesn't exist")
+
+    remove_from(thing["placeId"], thingId)
+    add_to(toPlaceId, thingId)
+    thing["placeId"] = toPlaceId
+    objects[thingId] = thing # Save object
+    return thing
+
+@app.ajax("/create")
+def create_ajax(thing):
+    thingId = thing["id"]
+    name = thing["name"]
+    if len(thing["type"].split()) != 1:
+        raise InvalidCreate("Invalid type")
+    if thingId != "{} {}".format(thing["type"], thing["name"]):
+        raise InvalidCreate("Id should be type + name")
+    if objects.get(thingId) is not None:
+        raise InvalidCreate("Somewhere in the Doodle-verse, something already has that name. Please come up with an original name.")
+    if not name_regex.match(thingId):
+        raise InvalidCreate("Please only use english letters, numbers, spaces, and basic punctuation in names.")
+
+    thing["creator"] = current_user.id
+    thing["creation_time"] = datetime.now()
+
+    objects[thingId] = thing
+
+    add_to(thing["placeId"], thing)
+
+    return {"key": thingId, "thing": thing}
+
+@app.ajax("/move")
+def move_ajax(j):
+    key = j["thingId"]
+    to_loc = j["toPlaceId"]
+    thing = move(key, to_loc)
+    return {"key": key, "value": thing}
+
+@app.ajax("/art")
+def art_ajax(json):
+    # TODO: Separate art to reduce network traffic, since art doesn't change.
+    thingId = json["thingId"]
+    thing = objects.get(thingId)
+    if thing is None:
+        raise InvalidGet("Thing does not exist")
+    return {"thingId": thingId, "pictureUrl":thing["pictureUrl"]}
 
 @app.ajax("/get")
-def get(json):
-    # TODO: Separate art to reduce network traffic, since art doesn't change.
-    key = json["key"]
-    value = objects.get(key)
-    return {"key": key, "value":value}
+def get_ajax(json):
+    thingId = json["thingId"]
+    thing = objects.get(thingId)
+    if thing is None:
+        raise InvalidGet("Thing does not exist")
+    del thing["pictureUrl"]
+    return {"thingId": thingId, "thing":thing}
 
-@app.ajax("/getAllIds")
-def getAllIds(json):
-    # TODO: Just getAllPlaces instead
-    return {"keys": list(objects.keys())}
+@app.ajax("/things")
+def getAllThings(json):
+    return {"ids": list(objects.keys())}
+@app.ajax("/things/<type>")
+def getAllPlaces(json, type):
+    return {"ids": [k for k in objects.keys() if k.startswith(type + " ")]}
+
+@app.route(PREFIX+"/dump")
+def dump():
+    if not (app.config["DEBUG"] or current_user.id == "zachary"):
+        return "Disabled in production", 404
+    global db_dicts
+    s = "<pre>"
+    s+="DICTS = {}\n".format(repr(sorted(db_dicts)))
+    for d in sorted(db_dicts):
+        db = DBDict(d, debug=True)
+        s+="{}={{\n{}\n}}\n".format(d, "\n".join("  {}: {}".format(repr(k),repr(v)) for k,v in db.items()))
+    s+="</pre>"
+    return s
