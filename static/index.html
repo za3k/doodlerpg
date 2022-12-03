@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html class="fullscreen">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Doodle RPG</title>
+    <link rel="stylesheet" href="static/style.css">
+    <link rel="stylesheet" href="static/css/bootstrap.css">
+
+    <script src="login.js"></script>
+    <script src="static/js/jquery-3.6.1.js"></script>
+    <script src="static/easel.js"></script>
+    <script src="static/index.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <nav class="navbar navbar-default">
+            <div class="container-fluid">
+            <div class="navbar-brand navbar-brand-link"><a href=".">Doodle RPG</a></div>
+            <ul class="nav navbar-nav">
+                <li><a href="https://github.com/za3k/doodlerpg">about</a></li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+                <li class="logged-in"><a href="logout">Log Out (<span class="my-username">{USER}</span>)</a></li>
+            </ul>
+        </nav>
+
+        <header class="logged-out">
+            A relaxing coloring book MMO. It is nice. 
+        </header>
+
+        <section class="content logged-out">
+            <h3>Make an account to explore!</h3>
+            <form action='login' method='POST'>
+                <input type='text' name='username' id='username' placeholder='username'/>
+                <input type='password' name='password' id='password' placeholder='password'/>
+                <input type='submit' name='submit'/>
+            </form>
+            To make a new account, just make up any username and password, and log in with them. It's that easy!
+        </section>
+
+        <section class="content logged-in">
+            <div class="error"></div>
+            <div class="game">
+                <div class="marker">
+                <div class="easel">
+                    <canvas height="398" width="398"></canvas>
+                    <div>Draw <span class="name">one art</span></div>
+                    <div class="hflex">
+                        <input type="submit" class="btn btn-primary done" value="Done">
+                        <div></div>
+                        <input type="submit" class="btn btn-primary clear" value="Clear">
+                    </div>
+                </div>
+                <input type="submit" class="btn btn-primary craft" value="Craft Something">
+                <div class="chooser">
+                    <span class="prompt"></span>
+                    <select class="premade"></select>
+                    <span class="or"> or </span>
+                    <input class="custom" placeholder="custom name">
+                    <input type="submit" class="btn btn-primary done" value="Pick">
+                </div>
+            </div>
+        </section>
+    </div>
+</body>
+</html>
