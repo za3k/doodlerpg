@@ -76,8 +76,9 @@ class Backend {
 class UI {
     constructor(div, game) {
         this.div = div;
-        this.marker = div.find(".marker")
         this.game = game;
+        this.place = div.find(".place-container");
+        this.things = div.find(".thing-container");
         const easel = new Easel(div.find(".easel"));
         const chooser = new Chooser(div.find(".chooser"));
 
@@ -87,14 +88,23 @@ class UI {
         this.draw = easel.draw.bind(easel);
     }
     add(e) {
-        this.marker.before(e);
-        scroll();
+        this.things.append(e);
+        //scroll();
     }
 
     // UI methods
-    async displayThing(thing) { this.add(await this.thingCard(thing)); }
+    async displayPlace(place) {
+        this.place.html(await this.thingCard(place));
+    }
+    async displayThing(thing) {
+        this.add(await this.thingCard(thing));
+    }
+
     mention(text) { this.add(this.mentionCard(text)); }
-    clear() { this.marker.prevAll().remove(); }
+    clear() {
+        this.things.find(":not(.craft)").remove();
+        this.place.children().remove();
+    }
 
     // Template filler methods
     mentionCard(text) {
@@ -176,15 +186,11 @@ class Game {
     }
     async playerArrived() {
         this.ui.clear();
-        this.ui.mention(`You are in ${this.place.name}.`);
+        await this.ui.displayPlace(this.place);
 
-        await this.ui.displayThing(this.place);
-        this.ui.mention("Things here include: ");
-        const thingPromises = [];
-        for (let thingId of this.place.contents) {
-            thingPromises.push(this.backend.get(thingId));
-        }
-        for (let thing of await Promise.all(thingPromises)) {
+        for (let thingPromise of this.place.contents.map(this.backend.get.bind(this.backend))) {
+            // Load each one in order, but requests go in parallel.
+            const thing = await thingPromise;
             if (thing) {
                 await this.ui.displayThing(thing);
             } else debug("Thing is here but not created");

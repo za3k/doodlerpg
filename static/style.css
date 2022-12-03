@@ -16,7 +16,16 @@ nav > li.logged-in, .logged-in {
     display: none;
 }
 
-.game > * {
+.place-container {
+    width: 100%;
+    text-align: center;
+    margin-top: 20px;
+}
+.place-container > * {
+    display: inline-block;
+}
+
+.thing-container > * {
     margin-bottom: 20px;
     vertical-align: top;
 }

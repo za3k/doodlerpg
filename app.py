@@ -169,7 +169,6 @@ def move_ajax(j):
 
 @app.ajax("/art")
 def art_ajax(json):
-    # TODO: Separate art to reduce network traffic, since art doesn't change.
     thingId = json["thingId"]
     thing = objects.get(thingId)
     if thing is None:
