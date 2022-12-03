@@ -1,5 +1,7 @@
 /* -- This specific Hack-A-Day project -- */
 
+/* TODO: Make mobile friendly */
+
 .error:not(:empty) {
     margin: 20px;
     background-color: pink;

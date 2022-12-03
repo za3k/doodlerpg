@@ -1,3 +1,5 @@
+/* TODO: Make mobile drawing work */
+
 class Easel {
     constructor(div) {
         this.div = div;
@@ -79,7 +81,7 @@ class Easel {
     }
 }
 
-class Chooser {
+class Chooser { // TODO: Make mobile friendly
     constructor(div) {
         this.div = div;
         this.done = div.find(".done");
