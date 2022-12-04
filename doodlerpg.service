@@ -1,10 +1,10 @@
 [Unit]
-Description=gunicorn3 for hackaday-30-mmo
+Description=gunicorn3 for doodle RPG
 After=network.target
 
 [Service]
 Type=simple
-WorkingDirectory=/hackaday/day30_mmo
+WorkingDirectory=/hackaday/doodlerpg
 ExecStart=/bin/gunicorn3 --bind 0.0.0.0:8031 app:app
 
 [Install]
