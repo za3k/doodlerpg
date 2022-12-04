@@ -125,7 +125,7 @@ class UI {
     clear() {
         this.crafting.addClass("hidden");
         this.mentions.children().remove();
-        this.things.find(".mention").remove();
+        this.things.find(".thing").remove();
         this.place.children().remove();
     }
 
@@ -210,7 +210,7 @@ class Game {
     }
     async playerMove(placeId) {
         this.place = (await this.backend.get(placeId)) || (await this.craftMissing(placeId));
-        this.backend.move(this.player, placeId);
+        this.backend.move(this.player.id, placeId);
         this.playerArrived();
     }
     async playerArrived() {
