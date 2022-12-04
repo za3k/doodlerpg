@@ -65,7 +65,7 @@ def login_js():
     if current_user.is_authenticated:
         return "window.loggedIn = true;\nwindow.userId = \"{}\";".format(current_user.id)
     else:
-        return "window.loggedIn = false;\nwindow.userId = "";"
+        return "window.loggedIn = false;\nwindow.userId = \"\";"
 
 # -- Index page
 @app.route(PREFIX+"/")
