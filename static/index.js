@@ -1,20 +1,29 @@
 'use strict';
 
-function debug(e) { $(".error").text(e || ""); }
+// TODO: Remove bootstrap vibes at top
+// TODO: Name checks, room fullness checks should be on client to fail faster
+
 function scroll() { window.scrollTo(0, document.body.scrollHeight); }
+function debug(e) {
+    $(".error").text(e || "");
+    scroll();
+    debugger;
+}
 function deepcopy(o) { return JSON.parse(JSON.stringify(o)); }
 
 const PRESETS = {
     place: {
         contents: [],
+        maxContentsSize: 50,
     },
     door: {
         actions: {"move": "movePlayer"},
     },
     person: {
+        maxContentsSize: 50,
+        placeId: "place the first room"
     },
-    scenery: {
-    }
+    scenery: { }
 }
 
 function splitId(id) {
@@ -45,9 +54,9 @@ class Backend {
                 data: JSON.stringify(data),
                 dataType: 'json',
                 contentType: 'application/json',
-                success: success,
-                failure: (r) => {
-                    debug(r.error);
+                success: (r) => {
+                    if (r.success) success(r);
+                    else debug(r.error);
                 }
             });
         })
@@ -66,9 +75,9 @@ class Backend {
     }
     async get(thingId) {
         this.see(thingId);
-        this.artCache[thingId] = this.artCache[thingId] || this.ajax("/art", {thingId});
         const thing = (await this.ajax("/get", {thingId})).thing;
-        thing.pictureUrl = (await this.artCache[thingId]).pictureUrl;
+        if (!thing) return thing;
+        thing.pictureUrl = (this.artCache[thingId] = this.artCache[thingId] || (await this.ajax("/art", {thingId})).pictureUrl);
         return thing;
     }
 }
@@ -77,8 +86,11 @@ class UI {
     constructor(div, game) {
         this.div = div;
         this.game = game;
+        this.marker = $(div.find(".craft")[0]);
         this.place = div.find(".place-container");
         this.things = div.find(".thing-container");
+        this.crafting = div.find(".craft");
+        this.mentions = div.find(".mentions");
         const easel = new Easel(div.find(".easel"));
         const chooser = new Chooser(div.find(".chooser"));
 
@@ -88,8 +100,7 @@ class UI {
         this.draw = easel.draw.bind(easel);
     }
     add(e) {
-        this.things.append(e);
-        //scroll();
+        this.marker.before(e);
     }
 
     // UI methods
@@ -97,12 +108,24 @@ class UI {
         this.place.html(await this.thingCard(place));
     }
     async displayThing(thing) {
-        this.add(await this.thingCard(thing));
+        const e = await this.thingCard(thing);
+        this.marker.before(e);
+        //scroll();
+    }
+    async displayCrafting() {
+        this.crafting.removeClass("hidden");
     }
 
-    mention(text) { this.add(this.mentionCard(text)); }
+    mention(text) {
+        this.mentions.append(this.mentionCard(text));
+    }
+    clearMentions() {
+        this.mentions.children().remove();
+    }
     clear() {
-        this.things.find(":not(.craft)").remove();
+        this.crafting.addClass("hidden");
+        this.mentions.children().remove();
+        this.things.find(".mention").remove();
         this.place.children().remove();
     }
 
@@ -112,7 +135,7 @@ class UI {
     }
     async thingCard(thing) {
         // Make the base card
-        const card = $(`<div class="thing ${thing.type}"><div class="type">${thing.type}</div><canvas class="thing-image"></canvas><div class="name">${thing.name}</div><div class="actions"></div></div>`);
+        const card = $(`<div class="thing card ${thing.type}"><div class="type">${thing.type}</div><canvas class="thing-image"></canvas><div class="name">${thing.name}</div><div class="actions"></div></div>`);
 
         // Draw the picture
         const image = await this.makeImage(thing.pictureUrl);
@@ -136,7 +159,12 @@ class Game {
     constructor(div) {
         this.backend = new Backend();
         this.ui = new UI(div, this);
-        this.craftBtn = div.find(".craft")
+
+        // Wait for actions, then do stuff. All async.
+        this.craftBtn = div.find(".craft input");
+        for (let type of ["door", "scenery"]) {
+            div.find(`.craft-${type}`).on("click", () => this.craft({type}))
+        }
     }
 
     async craft(thing = {}) {
@@ -161,9 +189,10 @@ class Game {
 
         if (thing.type != "place" && !thing.placeId) thing.placeId = this.player.placeId;
 
-        await this.backend.created(thing); // data update
+        await this.backend.create(thing); // data update
         this.created(thing, thing.placeId); // visual update. no 'await' deliberately
             
+        this.ui.clearMentions();
         this.craftBtn.show();
         return thing;
     }
@@ -180,7 +209,7 @@ class Game {
         return await this.craft(splitId(id)); // name, type
     }
     async playerMove(placeId) {
-        this.place = await this.backend.get(placeId) || await this.craftMissing(placeId);
+        this.place = (await this.backend.get(placeId)) || (await this.craftMissing(placeId));
         this.backend.move(this.player, placeId);
         this.playerArrived();
     }
@@ -195,20 +224,18 @@ class Game {
                 await this.ui.displayThing(thing);
             } else debug("Thing is here but not created");
         }
+        this.ui.displayCrafting();
     }
     async onAction(thing, action) {
         if (action == "movePlayer") this.playerMove(thing.targetId);
     }
     async run() {
         const yourId = `person ${window.userId}`;
-        const firstRoomId = "place the first room";
+        const firstRoomId = PRESETS.person.placeId;
         //const firstRoom = await this.backend.get(firstRoomId) || await this.craft({type: "place", name: splitId(firstRoomId).name}); // Needed for the very first player only.
         this.player = await this.backend.get(yourId) || await this.craft({type: "person", placeId: firstRoomId, name: window.userId});
         this.place = await this.backend.get(this.player.placeId) || await this.craftMissing(this.player.placeId);
         this.playerArrived();
-
-        // Wait for actions, then do stuff. All async.
-        this.craftBtn.on("click", () => this.craft());
     }
 }
 

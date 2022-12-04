@@ -115,12 +115,18 @@ class Chooser { // TODO: Make mobile friendly
 
         return new Promise((done) => {
             this.div.toggleClass("enabled", true);
+            if (allowPremade) this.select.focus();
+            else this.custom.focus();
             scroll();
             
-            this.done.on("click", () => {
+            const over = () => {
                 this.div.toggleClass("enabled", false);
-
                 done(this.getAnswer());
+                this.custom.off("keydown");
+            }
+            this.done.on("click", over);
+            if (this.allowCustom) this.custom.on("keydown", (e) => {
+                if (e.which == 13) over();
             });
         });
     }

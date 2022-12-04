@@ -3,6 +3,7 @@ import flask, flask_login
 from flask import url_for, request, render_template, redirect, send_from_directory
 from flask_login import current_user
 import json, random, hashlib, functools, string, re
+from datetime import datetime
 from db import DBDict, db_dicts
 
 PREFIX="/doodlerpg"
@@ -88,12 +89,11 @@ def ajax(route):
                 import time
                 time.sleep(0.5)
             try:
-                return f(query, *a, **kw)
-                r = f(*args)
+                r = f(query, *a, **kw)
                 r["success"] = True
                 return r
             except UserError as e:
-                return { "success": False, "error": e.error }, 501
+                return { "success": False, "error": e.error }, 200
         #print(r)
         return app.route(r, methods=["POST"])(app.route(PREFIX+r, methods=["POST"])(f2))
     return x
@@ -142,6 +142,21 @@ def move(thingId, toPlaceId):
 def create_ajax(thing):
     thingId = thing["id"]
     name = thing["name"]
+    placeId = thing["placeId"]
+    if placeId:
+        place = objects.get(placeId)
+        print(placeId, place)
+        if place:
+            maxThings = place.get("maxContentsSize", 50)
+            numThings = len(place.get("contents", []))
+            print(numThings, maxThings)
+            if numThings >= maxThings:
+                raise InvalidCreate("That place is too full already")
+        else:
+            raise InvalidCreate("Thing created in place that doesn't exist")
+    elif thing["type"] != "place":
+        raise InvalidCreate("Thing needs a place")
+
     if len(thing["type"].split()) != 1:
         raise InvalidCreate("Invalid type")
     if thingId != "{} {}".format(thing["type"], thing["name"]):
@@ -156,7 +171,8 @@ def create_ajax(thing):
 
     objects[thingId] = thing
 
-    add_to(thing["placeId"], thing)
+    if placeId:
+        add_to(placeId, thingId)
 
     return {"key": thingId, "thing": thing}
 
@@ -179,9 +195,8 @@ def art_ajax(json):
 def get_ajax(json):
     thingId = json["thingId"]
     thing = objects.get(thingId)
-    if thing is None:
-        raise InvalidGet("Thing does not exist")
-    del thing["pictureUrl"]
+    if thing is not None:
+        del thing["pictureUrl"]
     return {"thingId": thingId, "thing":thing}
 
 @app.ajax("/things")

@@ -40,11 +40,28 @@
         </section>
 
         <section class="content logged-in">
-            <div class="error"></div>
             <div class="game">
                 <div class="place-container"></div>
                 <div class="mention">Things here include:</div>
-                <div class="thing-container"></div>
+                <div class="thing-container">
+                    <div class="card door craft hidden">
+                        <div class="type">new door</div>
+                        <div class="thing-image plus"></div>
+                        <div class="name">?</div>
+                        <div class="actions">
+                            <input type="submit" value="doodle door" class="craft-door">
+                        </div>
+                    </div>
+                    <div class="card scenery craft hidden">
+                        <div class="type">new scenery</div>
+                        <div class="thing-image plus"></div>
+                        <div class="name">?</div>
+                        <div class="actions">
+                            <input type="submit" value="doodle scenery" class="craft-scenery">
+                        </div>
+                    </div>
+                </div>
+                <span class="mentions"></span>
                 <div class="easel">
                     <canvas height="398" width="398"></canvas>
                     <div>Draw <span class="name">one art</span></div>
@@ -54,7 +71,6 @@
                         <input type="submit" class="btn btn-primary clear" value="Clear">
                     </div>
                 </div>
-                <input type="submit" class="btn btn-primary craft" value="Craft Something">
                 <div class="chooser">
                     <span class="prompt"></span>
                     <select class="premade"></select>
@@ -64,6 +80,8 @@
                 </div>
             </div>
         </section>
+
+        <div class="error"></div>
     </div>
 </body>
 </html>

@@ -32,6 +32,10 @@ nav > li.logged-in, .logged-in {
     vertical-align: top;
 }
 
+.crafting .hidden, .craft.card.hidden {
+    display: none;
+}
+
 .mention {
     display: block;
     width: fit-content;
@@ -42,7 +46,7 @@ nav > li.logged-in, .logged-in {
     font-family: lucida;
 }
 
-.thing {
+.card {
     border: 1px solid lightgrey;
     display: inline-block;
     margin-left: 5em;
@@ -55,6 +59,15 @@ nav > li.logged-in, .logged-in {
 .thing canvas {
     width: 200px;
     height: 200px;
+    /*border: 1px solid;*/
+}
+div.plus {
+    height: 200px;
+    width: 200px;
+    filter: opacity(10%) blur(2px);
+    background-image:url(image/plus.svg);
+    background-size: contain;
+    background-repeat: no-repeat;
 }
 .thing .actions {
     padding: 5px 0 5px 0;
@@ -93,9 +106,12 @@ nav > li.logged-in, .logged-in {
 .easel div {
     width: 100%;
     text-align: center;
+    font-size: 16pt;
 }
 
 .chooser {
+    font-size: 16pt;
+    margin-bottom: 20px;
 
 }
 
