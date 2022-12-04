@@ -5,7 +5,7 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=/hackaday/day30_mmo
-ExecStart=/bin/gunicorn3 -e SCRIPT_NAME=/hackaday/mmo --bind 0.0.0.0:8030 app:app
+ExecStart=/bin/gunicorn3 -e SCRIPT_NAME=/hackaday/mmo --bind 0.0.0.0:8031 app:app
 
 [Install]
 WantedBy=multi-user.target
