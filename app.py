@@ -208,12 +208,12 @@ def getAllPlaces(json, type):
 
 @app.route(PREFIX+"/dump")
 def dump():
-    if not (app.config["DEBUG"] or current_user.id == "zachary"):
-        return "Disabled in production", 404
     global db_dicts
     s = "<pre>"
     s+="DICTS = {}\n".format(repr(sorted(db_dicts)))
     for d in sorted(db_dicts):
+        if d=="users" and not (app.config["DEBUG"] or current_user.id == "zachary"):
+            continue
         db = DBDict(d, debug=True)
         replacements = {
             "password": lambda x: "XXX",
