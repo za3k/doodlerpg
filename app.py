@@ -215,6 +215,12 @@ def dump():
     s+="DICTS = {}\n".format(repr(sorted(db_dicts)))
     for d in sorted(db_dicts):
         db = DBDict(d, debug=True)
-        s+="{}={{\n{}\n}}\n".format(d, "\n".join("  {}: {}".format(repr(k),repr(v)) for k,v in db.items()))
+        replacements = {
+            "password": lambda x: "XXX",
+            "pictureUrl": lambda x: x[:21]+"...",
+        }
+        identity = lambda x: x
+
+        s+="{}={{\n{}\n}}\n".format(d, "\n".join("  {}: {}".format(repr(k),repr({a: replacements.get(a, identity)(b) for a,b in v.items()})) for k,v in db.items()))
     s+="</pre>"
     return s
