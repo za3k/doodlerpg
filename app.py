@@ -142,7 +142,7 @@ def move(thingId, toPlaceId):
 def create_ajax(thing):
     thingId = thing["id"]
     name = thing["name"]
-    placeId = thing["placeId"]
+    placeId = thing.get("placeId", None)
     if placeId:
         place = objects.get(placeId)
         print(placeId, place)

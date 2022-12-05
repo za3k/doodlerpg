@@ -10,6 +10,18 @@
     padding: 10px;
 }
 
+.content form {
+    margin-bottom: 20px;
+}
+
+.chooser input {
+    margin-top: 1px;
+}
+.chooser input[type=submit] {
+    margin-top: 10px;
+}
+
+
 header, .content {
     margin-left: 40px !IMPORTANT;
 }
@@ -90,6 +102,7 @@ div.plus {
     display: none;
 }
 
+
 .easel {
     display: block;
     padding: 20px;
@@ -97,10 +110,23 @@ div.plus {
 }
 
 .easel canvas {
-    width: 400px;
-    height: 400px;
+    width: calc(min(100vw, 100vh));
+    height: calc(min(100vw, 100vh));
     border: 1px solid;
     user-select: none;
+}
+
+@media only screen and (max-width: 500px) {
+    .easel {
+        position: absolute;
+        left: 0px;
+    }
+}
+@media only screen and (min-width: 500px) {
+    .easel canvas {
+        width: 400px;
+        height: 400px;
+    }
 }
 
 .easel div {
