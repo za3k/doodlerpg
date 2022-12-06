@@ -97,6 +97,24 @@ div.plus {
 .scenery {
     background-color: rgba(255, 255, 0, 0.02);
 }
+.afk-container {
+    position: relative;
+    display: inline-block;
+    width: 300px;
+    height: 400px;
+}
+.card.afk {
+    background-color: rgb(200, 200, 200);
+    position: absolute;
+    left: calc(20px * min(var(--order), 5));
+    top: calc(20px * min(var(--order), 5));
+    z-index: calc(5 - var(--order) );
+    border-width: 2px;
+    border-color: #ddd;
+}
+.card.afk:hover {
+    z-index:7;
+}
 
 .easel:not(.enabled), .chooser:not(.enabled) {
     display: none;

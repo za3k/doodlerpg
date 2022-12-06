@@ -10,6 +10,15 @@ function debug(e) {
     debugger;
 }
 function deepcopy(o) { return JSON.parse(JSON.stringify(o)); }
+function lexicalSort(a, b, key_func) {
+    const a_key = key_func(a);
+    const b_key = key_func(b);
+    for (let i=0; i<a_key.length; i++) {
+        if (a_key[i] < b_key[i]) return -1;
+        else if (a_key[i] > b_key[i]) return 1;
+    }
+    return 0;
+}
 
 const PRESETS = {
     place: {
@@ -78,6 +87,14 @@ class Backend {
         const thing = (await this.ajax("/get", {thingId})).thing;
         if (!thing) return thing;
         thing.pictureUrl = (this.artCache[thingId] = this.artCache[thingId] || (await this.ajax("/art", {thingId})).pictureUrl);
+
+        thing.updateTime = thing.updateTime || thing.creationTime || thing.creation_time || new Date(0);
+        thing.creationTime = thing.creationTime || thing.creation_time || new Date(0);
+        const now = new Date();
+        const daysSinceUpdate = (now - thing.updateTime)/1000.0/3600/24;
+        thing.afk = (thing.type == "person" && daysSinceUpdate > 1);
+        if (thing.afk) thing.type = "afk";
+        if (thing.type=="person") console.log(thing);
         return thing;
     }
 }
@@ -91,6 +108,7 @@ class UI {
         this.things = div.find(".thing-container");
         this.crafting = div.find(".craft");
         this.mentions = div.find(".mentions");
+        this.afk = div.find(".afk-container");
         const easel = new Easel(div.find(".easel"));
         const chooser = new Chooser(div.find(".chooser"));
 
@@ -109,7 +127,10 @@ class UI {
     }
     async displayThing(thing) {
         const e = await this.thingCard(thing);
-        this.marker.before(e);
+        if (thing.afk) {
+            e.css("--order", this.afk.children().length);
+            this.afk.append(e);
+        } else this.marker.before(e);
         //scroll();
     }
     async displayCrafting() {
@@ -125,6 +146,7 @@ class UI {
     clear() {
         this.crafting.addClass("hidden");
         this.mentions.children().remove();
+        this.afk.children().remove();
         this.things.find(".thing").remove();
         this.place.children().remove();
     }
@@ -217,13 +239,16 @@ class Game {
         this.ui.clear();
         await this.ui.displayPlace(this.place);
 
+        const things = [];
         for (let thingPromise of this.place.contents.map(this.backend.get.bind(this.backend))) {
             // Load each one in order, but requests go in parallel.
             const thing = await thingPromise;
-            if (thing) {
-                await this.ui.displayThing(thing);
-            } else debug("Thing is here but not created");
+            if (thing) things.push(thing);
+            else debug("Thing is here but not created");
         }
+        const TYPE_ORDER = ["place", "person", "scenery", "door", "afk"]
+        things.sort((a,b) => lexicalSort(a, b, x => [TYPE_ORDER.indexOf(x.type), new Date(x.creationTime), x.name]));
+        for (let thing of things) await this.ui.displayThing(thing);
         this.ui.displayCrafting();
     }
     async onAction(thing, action) {

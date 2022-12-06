@@ -70,7 +70,6 @@ def login_js():
 # -- Index page
 @app.route(PREFIX+"/")
 def index():
-    print(url_for('static', filename='style.css'))
     return send_from_directory('static', "index.html")
 
 # -- Ajax helper ---
@@ -94,7 +93,6 @@ def ajax(route):
                 return r
             except UserError as e:
                 return { "success": False, "error": e.error }, 200
-        #print(r)
         return app.route(r, methods=["POST"])(app.route(PREFIX+r, methods=["POST"])(f2))
     return x
 app.ajax = ajax
@@ -127,7 +125,6 @@ def remove_from(placeId, thingId):
         #raise InvalidMove("Thing removed from place, but it's not in the place")
         pass
 def move(thingId, toPlaceId):
-    print(thingId)
     thing = objects.get(thingId)
     if not thing:
         raise InvalidMove("Tried to move a thing that doesn't exist")
@@ -135,6 +132,7 @@ def move(thingId, toPlaceId):
     remove_from(thing["placeId"], thingId)
     add_to(toPlaceId, thingId)
     thing["placeId"] = toPlaceId
+    thing["updateTime"] = datetime.now()
     objects[thingId] = thing # Save object
     return thing
 
@@ -145,11 +143,9 @@ def create_ajax(thing):
     placeId = thing.get("placeId", None)
     if placeId:
         place = objects.get(placeId)
-        print(placeId, place)
         if place:
             maxThings = place.get("maxContentsSize", 50)
             numThings = len(place.get("contents", []))
-            print(numThings, maxThings)
             if numThings >= maxThings:
                 raise InvalidCreate("That place is too full already")
         else:
@@ -167,7 +163,8 @@ def create_ajax(thing):
         raise InvalidCreate("Please only use english letters, numbers, spaces, and basic punctuation in names.")
 
     thing["creator"] = current_user.id
-    thing["creation_time"] = datetime.now()
+    thing["creationTime"] = datetime.now()
+    thing["updateTime"] = datetime.now()
 
     objects[thingId] = thing
 
