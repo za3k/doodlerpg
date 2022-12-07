@@ -243,7 +243,8 @@ class Game {
     }
     async playerMove(placeId) {
         this.place = (await this.backend.get(placeId)) || (await this.craftMissing(placeId));
-        this.backend.move(this.player.id, placeId);
+        await this.backend.move(this.player.id, placeId);
+        this.player = await this.backend.get(this.player.id);
         this.playerArrived();
     }
     async playerArrived() {
