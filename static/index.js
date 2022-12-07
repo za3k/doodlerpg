@@ -4,7 +4,7 @@
 // TODO: Name checks, room fullness checks should be on client to fail faster
 
 const VERSIONS = [
-    { number: 1, message: "New this update: <ol><li>you can report bugs</li><li>afk players are hidden</li><li>things are sorted</li><li>move shows where to</li></ol>" }
+    { number: 1, message: "New this update: <ol><li>play on your phone</li><li>'move' shows where to</li></ol> New last update: <ol><li>you can report bugs</li><li>afk players are hidden</li><li>things are sorted</li></ol>" }
 ]
 const VERSION = VERSIONS[VERSIONS.length-1];
 
@@ -267,7 +267,8 @@ class Game {
     }
     checkNewVersion() {
         const lastVersion = localStorage.getItem("version") || 0;
-        //localStorage.setItem("version", VERSION.number);
+        if (!window.location.href.includes("localhost"))
+            localStorage.setItem("version", VERSION.number);
         if (lastVersion < VERSION.number) this.ui.displayMotd(VERSION.message)
     }
     async run() {

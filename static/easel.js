@@ -1,5 +1,3 @@
-/* TODO: Make mobile drawing work */
-
 class Easel {
     constructor(div) {
         this.div = div;
@@ -32,23 +30,42 @@ class Easel {
     }
     enable() {
         this.div.toggleClass("enabled", true);
-        scroll();
+        scroll(); // Why doesn't it scroll to include the buttons after, on chrome's test mobile?
         // Allow drawing
-        this.jcanvas.on("mousedown", (ev) => {
+        const engage = ev => {
             let mouse = this.mouse(ev);
             this.line(mouse,mouse);
-            this.jcanvas.on("mousemove", (ev) => {
+            const move = ev => {
+                ev.preventDefault()
+                ev.stopPropagation();
                 const newMouse = this.mouse(ev);
                 this.line(mouse, newMouse);
                 mouse = newMouse;
-            })
-            $(document).on("mouseup", (ev) => {
+            };
+            const disengage = ev => {
                 this.jcanvas.off("mousemove");
+                this.jcanvas.off("touchmove");
                 $(document).off("mouseup");
+                $(document).off("touchend");
                 const finalMouse = this.mouse(ev);
                 this.line(mouse, finalMouse);
+            };
+            this.jcanvas.on("mousemove", move);
+            this.jcanvas.on("touchmove", ev => {
+                const touch = ev.touches[0];
+                ev.preventDefault()
+                ev.stopPropagation();
+                var mouseEvent = new MouseEvent("mousemove", {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+                this.jcanvas[0].dispatchEvent(mouseEvent);
             });
-        });
+            $(document).on("mouseup", disengage);
+            $(document).on("touchend", disengage);
+        };
+        this.jcanvas.on("mousedown", engage);
+        this.jcanvas.on("touchstart", ev => engage(ev.touches[0]));
     }
     disable() {
         this.div.toggleClass("enabled", false);
