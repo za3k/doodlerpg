@@ -92,8 +92,8 @@ class Backend {
         if (!thing) return thing;
         thing.pictureUrl = (this.artCache[thingId] = this.artCache[thingId] || (await this.ajax("/art", {thingId})).pictureUrl);
 
-        thing.updateTime = thing.updateTime || thing.creationTime || thing.creation_time || new Date(0);
-        thing.creationTime = thing.creationTime || thing.creation_time || new Date(0);
+        thing.creationTime = new Date(thing.creationTime || thing.creation_time || 0);
+        thing.updateTime = new Date(thing.updateTime || thing.creationTime || thing.creation_time || 0);
         const now = new Date();
         const daysSinceUpdate = (now - thing.updateTime)/1000.0/3600/24;
         thing.afk = (thing.type == "person" && daysSinceUpdate > 1);
