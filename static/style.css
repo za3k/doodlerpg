@@ -25,10 +25,6 @@
 }
 
 
-header, .content {
-    margin-left: 40px !IMPORTANT;
-}
-
 nav > li.logged-in, .logged-in {
     display: none;
 }
@@ -64,13 +60,34 @@ nav > li.logged-in, .logged-in {
 .card {
     border: 1px solid lightgrey;
     display: inline-block;
-    margin-left: 5em;
     padding: 10px;
     border-radius: 20px;
     text-align: center;
     width: min-content;
     height: 300px
 }
+@media only screen and (min-width: 600px) {
+    .card {
+        margin-left: 5em;
+    }
+    header, .content {
+        margin-left: 40px !IMPORTANT;
+    }
+    .afk-container {
+        width: 300px;
+        height: 400px;
+    }
+}
+@media only screen and (max-width: 600px) {
+    .thing-container {
+        text-align: center;
+    }
+    .afk-container {
+        width: 224px;
+        height: 300px;
+    }
+}
+
 .thing canvas {
     width: 200px;
     height: 200px;
@@ -103,8 +120,6 @@ div.plus {
 .afk-container {
     position: relative;
     display: inline-block;
-    width: 300px;
-    height: 400px;
 }
 .card.afk {
     background-color: rgb(200, 200, 200);
