@@ -2,12 +2,15 @@
 
 /* TODO: Make mobile friendly */
 
-.error:not(:empty) {
+.error:not(:empty), .motd:not(:empty) {
     margin: 20px;
     background-color: pink;
     border: 1px solid black;
     border-radius: 10px;
     padding: 10px;
+}
+.motd:not(:empty) {
+    background-color: lightblue;
 }
 
 .content form {

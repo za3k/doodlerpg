@@ -3,11 +3,15 @@
 // TODO: Remove bootstrap vibes at top
 // TODO: Name checks, room fullness checks should be on client to fail faster
 
+const VERSIONS = [
+    { number: 1, message: "New this update: <ol><li>you can report bugs</li><li>afk players are hidden</li><li>things are sorted</li><li>move shows where to</li></ol>" }
+]
+const VERSION = VERSIONS[VERSIONS.length-1];
+
 function scroll() { window.scrollTo(0, document.body.scrollHeight); }
 function debug(e) {
     $(".error").text(e || "");
     scroll();
-    debugger;
 }
 function deepcopy(o) { return JSON.parse(JSON.stringify(o)); }
 function lexicalSort(a, b, key_func) {
@@ -94,7 +98,6 @@ class Backend {
         const daysSinceUpdate = (now - thing.updateTime)/1000.0/3600/24;
         thing.afk = (thing.type == "person" && daysSinceUpdate > 1);
         if (thing.afk) thing.type = "afk";
-        if (thing.type=="person") console.log(thing);
         return thing;
     }
 }
@@ -109,6 +112,7 @@ class UI {
         this.crafting = div.find(".craft");
         this.mentions = div.find(".mentions");
         this.afk = div.find(".afk-container");
+        this.motd = $(document).find(".motd");
         const easel = new Easel(div.find(".easel"));
         const chooser = new Chooser(div.find(".chooser"));
 
@@ -135,6 +139,9 @@ class UI {
     }
     async displayCrafting() {
         this.crafting.removeClass("hidden");
+    }
+    displayMotd(motd) {
+        this.motd.html(motd);
     }
 
     mention(text) {
@@ -169,6 +176,10 @@ class UI {
         // Add and bind action buttons
         const actions = card.find(".actions");
         for (let [name, action] of Object.entries(thing.actions||{})) {
+            if (name == "move") {
+                const to = splitId(thing.targetId).name;
+                name = `move (${to})`;
+            }
             const actionE = $(`<input type="submit" class="action" value="${name}" />`);
             actionE.on("click", () => { this.game.onAction(thing, action); });
             actions.append(actionE);
@@ -254,7 +265,13 @@ class Game {
     async onAction(thing, action) {
         if (action == "movePlayer") this.playerMove(thing.targetId);
     }
+    checkNewVersion() {
+        const lastVersion = localStorage.getItem("version") || 0;
+        //localStorage.setItem("version", VERSION.number);
+        if (lastVersion < VERSION.number) this.ui.displayMotd(VERSION.message)
+    }
     async run() {
+        this.checkNewVersion();
         const yourId = `person ${window.userId}`;
         const firstRoomId = PRESETS.person.placeId;
         //const firstRoom = await this.backend.get(firstRoomId) || await this.craft({type: "place", name: splitId(firstRoomId).name}); // Needed for the very first player only.
