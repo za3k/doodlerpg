@@ -4,10 +4,16 @@
 // TODO: Name checks, room fullness checks should be on client to fail faster
 
 const VERSIONS = [
-    { number: 1, message: "New this update: <ol><li>play on your phone</li><li>'move' shows where to</li></ol> New last update: <ol><li>you can report bugs</li><li>afk players are hidden</li><li>things are sorted</li></ol>" },
-    { number: 2, message: "New this update: <ol><li>Can draw things on phone (bugs fixed)</li><li>Added eraser</li></ol> New last update: <ol><li>play on your phone</li><li>'move' shows where to</li></ol>" }
+    { number: 0, features: ["you can report bugs", "afk players are hidden", "things are sorted"]},
+    { number: 1, features: ["play on your phone", "'move' shows where to"]},
+    { number: 2, features: ["can draw things on phone (bugs fixed)", "eraser"]},
+    { number: 3, features: ["make and give items"]},
 ]
-const VERSION = VERSIONS[VERSIONS.length-1];
+const feature_list = x => `<ol><li>${x.features.join("</li><li>")}</li></ol>`
+const VERSION = {
+    number: VERSIONS[VERSIONS.length-1].number,
+    message: `New this update: ${feature_list(VERSIONS[VERSIONS.length-1])} New last update: ${feature_list(VERSIONS[VERSIONS.length-2])}`
+}
 
 function scroll() { window.scrollTo(0, document.body.scrollHeight); }
 function debug(e) {
@@ -31,13 +37,15 @@ const PRESETS = {
         maxContentsSize: 50,
     },
     door: {
-        actions: {"move": "movePlayer"},
+        actions: ["movePlayer"],
     },
     person: {
-        maxContentsSize: 50,
+        contents: [],
+        // TODO: Edit your own art
+        maxContentsSize: 3,
         placeId: "place the first room"
     },
-    scenery: { }
+    scenery: { },
 }
 
 function splitId(id) {
@@ -92,6 +100,7 @@ class Backend {
         const thing = (await this.ajax("/get", {thingId})).thing;
         if (!thing) return thing;
         thing.pictureUrl = (this.artCache[thingId] = this.artCache[thingId] || (await this.ajax("/art", {thingId})).pictureUrl);
+        thing.actions = PRESETS[thing.type].actions || [];
 
         thing.creationTime = new Date(thing.creationTime || thing.creation_time || 0);
         thing.updateTime = new Date(thing.updateTime || thing.creationTime || thing.creation_time || 0);
@@ -177,11 +186,10 @@ class UI {
 
         // Add and bind action buttons
         const actions = card.find(".actions");
-        for (let [name, action] of Object.entries(thing.actions||{})) {
-            if (name == "move") {
-                const to = splitId(thing.targetId).name;
-                name = `move (${to})`;
-            }
+        for (let actionId of thing.actions||[]) {
+            let name = actionId;
+            if (actionId == "movePlayer") name = `move (${splitId(thing.targetId).name})`;
+
             const actionE = $(`<input type="submit" class="action" value="${name}" />`);
             actionE.on("click", () => { this.game.onAction(thing, action); });
             actions.append(actionE);
