@@ -124,20 +124,20 @@ div.plus {
     /*height: 30px;*/
 }
 .place {
-    background-color: rgba(255, 0, 0, 0.02);
+    background-color: rgb(255, 250, 250);
 }
 .person {
-    background-color: rgba(0, 255, 0, 0.02);
+    background-color: rgb(250, 255, 250);
     height: auto;
 }
 .door {
-    background-color: rgba(0, 0, 255, 0.02);
+    background-color: rgb(250, 250, 255);
 }
 .scenery {
-    background-color: rgba(255, 255, 0, 0.02);
+    background-color: rgb(255, 255, 250);
 }
 .item {
-    background-color: rgba(0, 255, 255, 0.02);
+    background-color: rgb(250, 255, 255); /*rgba(0, 255, 255, 0.02);*/
 }
 .inventory .card {
     height: auto;

@@ -145,12 +145,8 @@ def create_ajax(thing):
     placeId = thing.get("placeId", None)
     if placeId:
         place = objects.get(placeId)
-        if place:
-            maxThings = place.get("maxContentsSize", 50)
-            numThings = len(place.get("contents", []))
-            if numThings >= maxThings:
-                raise InvalidCreate("That place is too full already")
-        else:
+        # No fullness check on server
+        if not place:
             raise InvalidCreate("Thing created in place that doesn't exist")
     elif thing["type"] != "place":
         raise InvalidCreate("Thing needs a place")

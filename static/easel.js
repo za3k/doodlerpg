@@ -24,14 +24,17 @@ class Easel {
         const tool = {
             pencil: {
                 lineWidth: 5,
-                strokeStyle: "#000000"
+                strokeStyle: "#000000",
+                lineCap: "round",
             },
             eraser: {
                 lineWidth: 10,
-                strokeStyle: "#ffffff"
+                strokeStyle: "#ffffff",
+                lineCap: "round",
             }
         }[this.tool];
         for (let [k, v] of Object.entries(tool)) c[k] = v;
+        c.lineWidth *= this.thicknessMultiplier;
         c.beginPath();
         c.moveTo(mouse1.x, mouse1.y);
         c.lineTo(mouse2.x, mouse2.y);
@@ -92,7 +95,8 @@ class Easel {
         $(document).off("mouseup");
         this.jcanvas.off("mousemove");
     }
-    draw(thing) {
+    draw(thing, thicknessMultiplier) {
+        this.thicknessMultiplier = thicknessMultiplier || 1;
         return new Promise((done) => {
             this.thing.text(thing);
             this.clear();

@@ -7,7 +7,7 @@ const VERSIONS = [
     { number: 0, features: ["you can report bugs", "afk players are hidden", "things are sorted"]},
     { number: 1, features: ["play on your phone", "'move' shows where to"]},
     { number: 2, features: ["draw on your phone (fixed)", "eraser"]},
-    { number: 3, features: ["make items", "drop items", "pick up items"]},
+    { number: 3, features: ["make items", "hold 3 items", "move crafting buttons", "smoother brush"]},
 ]
 const feature_list = x => `<ol><li>${x.features.join("</li><li>")}</li></ol>`
 const VERSION = {
@@ -135,10 +135,9 @@ class UI {
     constructor(div, game) {
         this.div = div;
         this.game = game;
-        this.marker = $(div.find(".craft")[0]);
+        this.marker = $(div.find(".afk-container")[0]);
         this.place = div.find(".place-container");
         this.things = div.find(".thing-container");
-        this.crafting = div.find(".craft");
         this.mentions = div.find(".mentions");
         this.afk = div.find(".afk-container");
         this.motd = $(document).find(".motd");
@@ -170,6 +169,14 @@ class UI {
         this.cards[thing.id].remove();
         delete this.cards[thing.id];
     }
+    async displayCard(thing) {
+        if (thing.craft) this.displayCraft(thing);
+        else await this.displayThing(thing);
+    }
+    async displayCraft(craft) {
+        const e = this.craftCard(craft.type);
+        this.marker.before(e);
+    }
     async displayThing(thing) {
         const e = await this.thingCard(thing);
         if (thing.afk) {
@@ -179,9 +186,6 @@ class UI {
         } else this.marker.before(e);
         //scroll();
         return this.cards[thing.id] = e;
-    }
-    async displayCrafting() {
-        this.crafting.removeClass("hidden");
     }
     displayMotd(motd) {
         this.motd.html(motd);
@@ -194,10 +198,10 @@ class UI {
         this.mentions.children().remove();
     }
     clear() {
-        this.crafting.addClass("hidden");
         this.mentions.children().remove();
         this.afk.children().remove();
         this.things.find(".thing").remove();
+        this.things.find(".craft").remove();
         this.place.children().remove();
         this.cards = {};
     }
@@ -241,6 +245,18 @@ class UI {
         }
         return card;
     }
+    craftCard(type) {
+        const e = $(`<div class="card ${type} craft">
+            <div class="type">new ${type}</div>
+            <div class="thing-image plus"></div>
+            <div class="name">?</div>
+            <div class="actions">
+                <input type="submit" value="doodle ${type}" class="craft-${type}">
+            </div>
+        </div>`)
+        e.on("click", () => this.game.craft({type}))
+        return e;
+    }
 }
 
 class Game {
@@ -280,7 +296,7 @@ class Game {
 
         // TOOD: Check if the target place is full
 
-        thing.pictureUrl = await this.ui.draw(thing.name);
+        thing.pictureUrl = await this.ui.draw(thing.name, thing.type=="item"&&2);
 
         await this.backend.create(thing); // data update
         this.created(thing, thing.placeId); // visual update. no 'await' deliberately
@@ -343,10 +359,10 @@ class Game {
             if (thing) things.push(thing);
             else debug("Thing is here but not created");
         }
-        const TYPE_ORDER = ["place", "person", "scenery", "door", "afk"]
-        things.sort((a,b) => lexicalSort(a, b, x => [TYPE_ORDER.indexOf(x.type), (x.afk?-1:1) * new Date(x.creationTime), x.name]));
-        for (let thing of things) await this.ui.displayThing(thing);
-        this.ui.displayCrafting();
+        const TYPE_ORDER = ["place", "person", "scenery", "door", "item", "afk"]
+        for (let type of ["scenery", "door", "item"]) things.push({craft: true, type: type});
+        things.sort((a,b) => lexicalSort(a, b, x => [TYPE_ORDER.indexOf(x.type), x.craft, (x.afk?-1:1) * new Date(x.creationTime), x.name]));
+        for (let thing of things) await this.ui.displayCard(thing);
     }
     async onAction(thing, actionId) {
         try {
