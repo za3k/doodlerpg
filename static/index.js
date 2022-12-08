@@ -229,7 +229,7 @@ class UI {
                 inventory.append(itemCard);
             }
             if (this.game.player.id == thing.id) {
-                const craftCard = this.craftCard("", "item", true);
+                const craftCard = this.craftCard("item", true);
                 inventory.append(craftCard);
             }
             card.append(inventory);
