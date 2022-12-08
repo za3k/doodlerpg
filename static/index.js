@@ -53,6 +53,7 @@ const PRESETS = {
     // TODO: Quest: challenge the world to draw a thing
     // TODO: Animate pick up, drop, swap, and give
     // TODO: Animate move. Ideally, load everything and THEN show new screen
+    // TODO: Allow drag+drop? Probably not.
     item: {
         actions: ["pick up", "drop", "trade"]
     },
@@ -186,10 +187,20 @@ class UI {
             this.afk.css("--cards", this.afk.children().length);
         } else this.marker.before(e);
         //scroll();
-        return this.cards[thing.id] = e;
+        return e;
     }
     displayMotd(motd) {
         this.motd.html(motd);
+    }
+    scrollTo(thingId) {
+        let oldCard = this.cards[thingId];
+        if (!oldCard) return;
+        // Scroll to the top-level card.
+        while (oldCard.is(".inventory .card")) oldCard = oldCard.parents(".card").first();
+        oldCard[0].scrollIntoView();
+    }
+    toggleActions(enabled) {
+        this.div.find(".action").toggleClass("hidden", enabled);
     }
 
     mention(text) {
@@ -256,6 +267,7 @@ class UI {
                 actions.append(actionE);
             }
         }
+        this.cards[thing.id] = card;
         return card;
     }
     actionCard(type, name, action) {
@@ -270,7 +282,11 @@ class UI {
     }
     craftCard(type, tiny) {
         const e = this.actionCard(type, "?", tiny ? "draw" : `doodle ${type}`);
-        e.on("click", () => this.game.craft({type}));
+        e.on("click", () => {
+            this.game.craft({type}).then(thing => {
+                this.scrollTo(thing.id)
+            })
+        });
         return e;
     }
 }
@@ -279,13 +295,11 @@ class Game {
     constructor(div) {
         this.backend = new Backend();
         this.ui = new UI(div, this);
-
-        // Wait for actions, then do stuff. All async.
-        this.craftBtn = div.find(".craft input");
     }
 
     async craft(thing = {}) {
-        this.craftBtn.hide();
+        this.ui.toggleActions(false);
+
         if (!thing.type) thing.type = await this.ui.choice("I want to make a new:", ["scenery", "door", "item"], false);
         else this.ui.mention(`You are making a new ${thing.type}.`);
         thing = {
@@ -307,15 +321,18 @@ class Game {
         else if (thing.type =="item") thing.placeId = this.player.id;
         else if (!thing.placeId) thing.placeId = this.player.placeId;
 
-        // TOOD: Check if the target place is full
+        // TODO: Check if the target place is full
 
         thing.pictureUrl = await this.ui.draw(thing.name, thing.type=="item"&&2);
 
-        await this.backend.create(thing); // data update
-        this.created(thing, thing.placeId); // visual update. no 'await' deliberately
+        // Data update
+        await this.backend.create(thing);
             
+        // Visual update
         this.ui.clearMentions();
-        this.craftBtn.show();
+        this.ui.toggleActions(true);
+        await this.created(thing, thing.placeId);
+
         return thing;
     }
     async created(thing) { // Visual update
@@ -391,6 +408,7 @@ class Game {
         for (let item of this.player.inventory) {
             if (item.name == itemName) this.move(item, person.id);
         }
+        this.ui.scrollTo(person.id);
     }
     async tradeFor(thing) {
         if (this.player.contents.length == 0) throw "You don't have any items to trade with.";
@@ -404,7 +422,7 @@ class Game {
                 break;
             }
         }
-        
+        this.ui.scrollTo(this.player.id);
     }
     async onAction(thing, actionId) {
         try {

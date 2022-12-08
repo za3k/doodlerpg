@@ -52,7 +52,7 @@ nav > li.logged-in, .logged-in {
     vertical-align: top;
 }
 
-.crafting .hidden {
+.crafting .hidden, .action .hidden {
     display: none;
 }
 
