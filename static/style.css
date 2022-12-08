@@ -1,14 +1,25 @@
 /* -- This specific Hack-A-Day project -- */
 
 .error:not(:empty), .motd:not(:empty) {
+    opacity: 1;
+    height: auto;
     margin: 20px;
     background-color: pink;
     border: 1px solid black;
     border-radius: 10px;
     padding: 10px;
 }
+.error:not(:empty) {
+    animation: fadeout 10s;
+    visibility: hidden;
+}
 .motd:not(:empty) {
     background-color: lightblue;
+}
+@keyframes fadeout {
+    0% { opacity: 1; visibility: visible; }
+    90% { opacity: 1; }
+    100% { opacity: 0; }
 }
 
 .content form {
@@ -41,7 +52,7 @@ nav > li.logged-in, .logged-in {
     vertical-align: top;
 }
 
-.crafting .hidden, .craft.card.hidden {
+.crafting .hidden {
     display: none;
 }
 
@@ -79,19 +90,18 @@ nav > li.logged-in, .logged-in {
     header, .content {
         margin-left: 40px !IMPORTANT;
     }
-    .afk-container {
-        width: 300px;
-        height: 400px;
+    .stack {
+        --max-cards: 5;
+        width: calc(222px + (20px * (var(--max-cards)-1)));
     }
 }
 @media only screen and (max-width: 600px) {
     .thing-container {
         text-align: center;
     }
-    .afk-container {
-        width: 224px;
-        --cards: 0;
-        height: calc(min(var(--cards), 1) * (max(var(--cards), 5) * 20px + 280px));
+    .stack {
+        --max-cards: 3;
+        width: 222px;
     }
     #bug-reporter {
         top: 0;
@@ -109,13 +119,16 @@ nav > li.logged-in, .logged-in {
     width: 50px;
     height: 50px;
 }
+.inventory .card .type {
+    display: none;
+}
 .inventory .card input[type=submit] {
     max-width: 50px;
 }
 .inventory .card .name {
     max-width: 50px;
 }
-.inventory .craft:nth-child(n+4) {
+.inventory .action:nth-child(n+4) {
     display: none;
 }
 div.plus {
@@ -137,6 +150,9 @@ div.plus {
     background-color: rgb(250, 255, 250);
     height: auto;
 }
+.afk {
+    height: 392px; /* Max height of a person */
+}
 .door {
     background-color: rgb(250, 250, 255);
 }
@@ -154,18 +170,27 @@ div.plus {
 }
 .inventory .card:last-child { margin-right: 0; }
 /* .inventory:not(:empty) { width: 200px } */
-.afk-container {
+.stack {
     position: relative;
     display: inline-block;
+    height: 396px;
+    --cards: 0;
+    margin-bottom: calc(min(var(--cards), 1) * ((max(var(--cards), var(--max-cards)) - 1) * 20px));
 }
-.card.afk {
+.afk {
     background-color: rgb(200, 200, 200);
     position: absolute;
-    left: calc(20px * min(var(--order), 5));
-    top: calc(20px * min(var(--order), 5));
-    z-index: calc(5 - var(--order) );
     border-width: 2px;
     border-color: #ddd;
+}
+.afk .card {
+    background-color: rgb(220, 220, 220);
+}
+
+.stack > .card {
+    left: calc(20px * min(var(--order), var(--max-cards) - 1));
+    top: calc(20px * min(var(--order), var(--max-cards) - 1));
+    z-index: calc(5 - var(--order) );
     box-shadow: 2px 2px 0px 0px rgb(0 0 0 / 40%);
 }
 .card.afk:hover {
@@ -184,8 +209,9 @@ div.plus {
 }
 
 .easel canvas {
-    width: calc(min(100vw, 100vh));
-    height: calc(min(100vw, 100vh));
+    --size: calc(min(100vw, 100vh) - 40px);
+    width: var(--size);
+    height: var(--size);
     border: 1px solid;
     user-select: none;
 }

@@ -7,7 +7,7 @@ const VERSIONS = [
     { number: 0, features: ["you can report bugs", "afk players are hidden", "things are sorted"]},
     { number: 1, features: ["play on your phone", "'move' shows where to"]},
     { number: 2, features: ["draw on your phone (fixed)", "eraser"]},
-    { number: 3, features: ["make items", "hold 3 items", "move doodle buttons", "smoother brush"]},
+    { number: 3, features: ["make items", "hold 3 items", "give and trade items", "move doodle buttons", "smoother brush"]},
 ]
 const feature_list = x => `<ol><li>${x.features.join("</li><li>")}</li></ol>`
 const VERSION = {
@@ -17,8 +17,11 @@ const VERSION = {
 
 function scroll() { window.scrollTo(0, document.body.scrollHeight); }
 function debug(e) {
-    $(".error").text(e || "");
-    scroll();
+    $(".error").text("");
+    setTimeout(() => { // Makes sure fade animation shows
+        $(".error").text(e || "");
+        scroll();
+    }, 1);
 }
 function deepcopy(o) { return JSON.parse(JSON.stringify(o)); }
 function lexicalSort(a, b, key_func) {
@@ -44,15 +47,14 @@ const PRESETS = {
         // TODO: Edit your own art
         maxContentsSize: 3,
         placeId: "place the first room",
-        actions: []
+        actions: ["give"]
     },
     scenery: { },
-    // TODO: Give someone an item. Trade someone an item.
+    // TODO: Quest: challenge the world to draw a thing
     // TODO: Animate pick up, drop, swap, and give
     // TODO: Animate move. Ideally, load everything and THEN show new screen
     item: {
-        // TODO: Swap item with someone
-        actions: ["pick up", "drop"]
+        actions: ["pick up", "drop", "trade"]
     },
 }
 
@@ -164,7 +166,7 @@ class UI {
         oldCard.replaceWith(newCard);
         this.cards[thing.id] = newCard;
     }
-    async removeThing(thing) {
+    removeThing(thing) {
         this.cards[thing.id].remove();
         delete this.cards[thing.id];
     }
@@ -199,8 +201,7 @@ class UI {
     clear() {
         this.mentions.children().remove();
         this.afk.children().remove();
-        this.things.find(".thing").remove();
-        this.things.find(".craft").remove();
+        this.things.find(".card").remove();
         this.place.children().remove();
         this.cards = {};
     }
@@ -220,45 +221,56 @@ class UI {
         canvas[0].width = canvas[0].height = 200;
         context.drawImage(image, 0, 0, canvas[0].width, canvas[0].height)
 
-        // Add inventory for a player
-        if (thing.type == "person") {
+        // Add inventory for a player (but not afk players)
+        if (thing.type == "person" || thing.type == "afk") {
             const inventory = $(`<div class="inventory"></div>`)
             for (let i=0; i<thing.inventory.length; i++) {
                 const itemCard = await this.thingCard(thing.inventory[i]);
                 inventory.append(itemCard);
             }
             if (this.game.player.id == thing.id) {
-                const craftCard = this.craftCard("item", true);
+                const craftCard = this.craftCard("", "item", true);
                 inventory.append(craftCard);
             }
             card.append(inventory);
         }
 
-
         // Add and bind action buttons
-        const actions = card.find(".actions");
+        const actions = card.find("> .actions");
         for (let actionId of thing.actions||[]) {
             let name = actionId;
             if (actionId == "movePlayer") name = `move (${splitId(thing.targetId).name})`;
             if (actionId == "drop" && !(thing.placeId == game.player.id)) continue;
             if (actionId == "pick up" && !(thing.placeId == game.player.placeId)) continue;
+            if (actionId == "give" && !(thing.id != game.player.id)) continue;
+            if (actionId == "trade" && !(splitId(thing.placeId).type == "person" && thing.placeId != game.player.id)) continue;
 
-            const actionE = $(`<input type="submit" class="action" value="${name}" />`);
-            actionE.on("click", () => { this.game.onAction(thing, actionId); });
-            actions.append(actionE);
+            if (actionId == "give" && thing.inventory) {
+                const actionCard = this.actionCard("item", "?", "give")
+                    .on("click", () => { this.game.onAction(thing, actionId); });
+                card.find(".inventory").append(actionCard);
+
+            } else {
+                const actionE = $(`<input type="submit" class="action" value="${name}" />`);
+                actionE.on("click", () => { this.game.onAction(thing, actionId); });
+                actions.append(actionE);
+            }
         }
         return card;
     }
-    craftCard(type, tiny) {
-        const e = $(`<div class="card ${type} craft">
-            <div class="type">${tiny ? type : `new ${type}`}</div>
+    actionCard(type, name, action) {
+        return $(`<div class="card ${type} action">
+            <div class="type">${type}</div>
             <div class="thing-image plus"></div>
-            <div class="name">?</div>
+            <div class="name">${name}</div>
             <div class="actions">
-                <input type="submit" value="${tiny ? "draw" : `doodle ${type}`}" class="craft-${type}">
+                <input type="submit" value="${action}">
             </div>
-        </div>`)
-        e.on("click", () => this.game.craft({type}))
+        </div>`);
+    }
+    craftCard(type, tiny) {
+        const e = this.actionCard(type, "?", tiny ? "draw" : `doodle ${type}`);
+        e.on("click", () => this.game.craft({type}));
         return e;
     }
 }
@@ -270,9 +282,6 @@ class Game {
 
         // Wait for actions, then do stuff. All async.
         this.craftBtn = div.find(".craft input");
-        for (let type of ["door", "scenery", "item"]) {
-            div.find(`.craft-${type}`).on("click", () => this.craft({type}))
-        }
     }
 
     async craft(thing = {}) {
@@ -309,9 +318,6 @@ class Game {
         this.craftBtn.show();
         return thing;
     }
-    async updateThingId(thingId) {
-        await this.ui.updateThing(await this.backend.get(thingId));
-    }
     async created(thing) { // Visual update
         if (thing.type == "place") return;
 
@@ -328,33 +334,38 @@ class Game {
     async craftMissing(id) {
         return await this.craft(splitId(id)); // name, type
     }
-    async move(thing, placeId) {
-        // Does NOT visually update.
-        // Does NOT update the model of where it was moved from
-        const place = (await this.backend.get(placeId)) || (await this.craftMissing(placeId));
-        if (thing.type != "person" && place.contents.length >= place.maxContentsSize) {
-            throw `${place.name} (a ${place.type}) can only hold ${place.maxContentsSize} things`;
+    async move(thing, toPlaceId, noLimit) {
+        const fromPlaceId = thing.placeId;
+        const toPlace = (await this.backend.get(toPlaceId)) || (await this.craftMissing(toPlaceId));
+        if (!noLimit && thing.type != "person" && toPlace.contents.length >= toPlace.maxContentsSize) {
+            throw `${toPlace.name} (a ${toPlace.type}) can only hold ${toPlace.maxContentsSize} things`;
         }
-        await this.backend.move(thing.id, placeId);
-        place.contents.push(thing.id); // Save an API call to update
-        thing.placeId = placeId; // Save an API call to update. Ignores updateTime.
-        return {place};
-    }
-    async playerMove(placeId) {
-        this.place = (await this.move(this.player, placeId)).place;
-        this.playerArrived();
-    }
-    async moveItem(item, toPlaceId) {
-        const fromPlaceId = item.placeId;
+        await this.backend.move(thing.id, toPlaceId);
 
-        await this.move(item, toPlaceId);
+        // Model updates for toPlace, fromPlace, thing.
+        // Save an API call to update toPlace
+        toPlace.contents.push(thing.id);
+        if (toPlace.inventory) toPlace.inventory.push(thing);
+        // Save an API call to update thing
+        thing.placeId = toPlaceId;
+        thing.updateTime = new Date();
+        // Actually use API to update fromPlace
+        const fromPlace = await this.backend.get(fromPlaceId);
 
-        if (fromPlaceId == this.place.id) this.ui.removeThing(item);
-        if (toPlaceId == this.place.id) this.ui.displayThing(item);
+        // Visual updates
+        if (fromPlaceId == this.place.id) await this.ui.removeThing(thing);
+        if (toPlaceId == this.place.id) await this.ui.displayThing(thing);
+        await this.ui.updateThing(fromPlace);
+        await this.ui.updateThing(toPlace);
+        //await this.ui.updateThing(thing); // Not needed in theory yet
 
-        for (let placeId of [fromPlaceId, toPlaceId]) {
-            if (splitId(placeId).type == "person") await this.updateThingId(placeId);
+        if (thing.id == this.player.id) {
+            this.place = toPlace;
+            this.playerArrived();
         }
+        if (fromPlace.id == this.player.id) this.player = fromPlace;
+
+        return {toPlace, fromPlace, thing};
     }
     async playerArrived() {
         this.ui.clear();
@@ -372,12 +383,38 @@ class Game {
         things.sort((a,b) => lexicalSort(a, b, x => [TYPE_ORDER.indexOf(x.type), x.craft, (x.afk?-1:1) * new Date(x.creationTime), x.name]));
         for (let thing of things) await this.ui.displayCard(thing);
     }
+    async giveToPerson(person) {
+        if (this.player.contents.length == 0) throw "You don't have any items to give away.";
+        if (person.contents.length >= person.maxContentsSize) throw `${person.name} (${person.type}) can only have ${person.maxContentsSize} things at a time`;
+
+        const itemName = await this.ui.choice(`I want to give ${person.name} my: `, this.player.contents.map(id => splitId(id).name), false);
+        for (let item of this.player.inventory) {
+            if (item.name == itemName) this.move(item, person.id);
+        }
+    }
+    async tradeFor(thing) {
+        if (this.player.contents.length == 0) throw "You don't have any items to trade with.";
+        const person = await this.backend.get(thing.placeId);
+        if (person.type != "person") return;
+        const itemName = await this.ui.choice(`In exchange for ${thing.name} I want to give ${person.name} my: `, this.player.contents.map(id => splitId(id).name), false);
+        for (let item of this.player.inventory) {
+            if (item.name == itemName) {
+                await this.move(thing, this.player.id, true);
+                await this.move(item, person.id, true);
+                break;
+            }
+        }
+        
+    }
     async onAction(thing, actionId) {
         try {
-            if (actionId == "movePlayer") await this.playerMove(thing.targetId);
-            else if (actionId == "drop") await this.moveItem(thing, this.player.placeId);
-            else if (actionId == "pick up") await this.moveItem(thing, this.player.id);
+            if (actionId == "movePlayer") await this.move(this.player, thing.targetId);
+            else if (actionId == "drop") await this.move(thing, this.player.placeId);
+            else if (actionId == "pick up") await this.move(thing, this.player.id);
+            else if (actionId == "give") await this.giveToPerson(thing);
+            else if (actionId == "trade") await this.tradeFor(thing);
         } catch (error) {
+            if (typeof(error) == "object") throw error;
             debug(error);
         }
     }
