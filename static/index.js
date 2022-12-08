@@ -4,7 +4,8 @@
 // TODO: Name checks, room fullness checks should be on client to fail faster
 
 const VERSIONS = [
-    { number: 1, message: "New this update: <ol><li>play on your phone</li><li>'move' shows where to</li></ol> New last update: <ol><li>you can report bugs</li><li>afk players are hidden</li><li>things are sorted</li></ol>" }
+    { number: 1, message: "New this update: <ol><li>play on your phone</li><li>'move' shows where to</li></ol> New last update: <ol><li>you can report bugs</li><li>afk players are hidden</li><li>things are sorted</li></ol>" },
+    { number: 2, message: "New this update: <ol><li>Can draw things on phone (bugs fixed)</li><li>Added eraser</li></ol> New last update: <ol><li>play on your phone</li><li>'move' shows where to</li></ol>" }
 ]
 const VERSION = VERSIONS[VERSIONS.length-1];
 

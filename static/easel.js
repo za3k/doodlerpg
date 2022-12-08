@@ -5,11 +5,14 @@ class Easel {
         this.canvas = this.jcanvas[0];
         this.done = div.find(".done");
         this.clearBtn = div.find(".clear");
+        this.toolBtn = div.find(".tool");
         this.thing = div.find(".name");
         this.enabled = false;
         this.canvas.height = this.jcanvas.width();
         this.canvas.width = this.jcanvas.height();
         this.clearBtn.on("click", this.clear.bind(this));
+        this.toolBtn.on("click", this.toggleTool.bind(this));
+        this.tool = "pencil";
     }
     mouse(ev) {
         const rect = this.canvas.getBoundingClientRect()
@@ -18,11 +21,30 @@ class Easel {
     line(mouse1, mouse2) {
         // assumes mouse (pixel) and canvas coordinates are the same, which they are here.
         const c = this.canvas.getContext("2d");
+        const tool = {
+            pencil: {
+                lineWidth: 5,
+                strokeStyle: "#000000"
+            },
+            eraser: {
+                lineWidth: 10,
+                strokeStyle: "#ffffff"
+            }
+        }[this.tool];
+        for (let [k, v] of Object.entries(tool)) {
+            console.log(tool, k, v, c);
+            c[k] = v;
+        }
         c.beginPath();
-        c.lineWidth = 5;
         c.moveTo(mouse1.x, mouse1.y);
         c.lineTo(mouse2.x, mouse2.y);
         c.stroke();
+    }
+    toggleTool() {
+        const tools = ["pencil", "eraser"];
+        this.tool = tools[(tools.indexOf(this.tool)+1)%tools.length];
+        this.toolBtn[0].value = this.tool.slice(0,1).toUpperCase() + this.tool.slice(1);
+        for (let x of tools) this.toolBtn.toggleClass(x, this.tool == x);
     }
     clear() {
         const c = this.canvas.getContext("2d");
