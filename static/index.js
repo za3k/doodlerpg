@@ -6,8 +6,8 @@
 const VERSIONS = [
     { number: 0, features: ["you can report bugs", "afk players are hidden", "things are sorted"]},
     { number: 1, features: ["play on your phone", "'move' shows where to"]},
-    { number: 2, features: ["can draw things on phone (bugs fixed)", "eraser"]},
-    { number: 3, features: ["make and give items"]},
+    { number: 2, features: ["draw on your phone (fixed)", "eraser"]},
+    { number: 3, features: ["make items", "drop items", "pick up items"]},
 ]
 const feature_list = x => `<ol><li>${x.features.join("</li><li>")}</li></ol>`
 const VERSION = {
@@ -43,9 +43,18 @@ const PRESETS = {
         contents: [],
         // TODO: Edit your own art
         maxContentsSize: 3,
-        placeId: "place the first room"
+        placeId: "place the first room",
+        actions: []
     },
     scenery: { },
+    // TODO: Give someone an item. Trade someone an item.
+    // TODO: move item-create plus-card inside your card
+    // TODO: Animate pick up, drop, swap, and give
+    // TODO: Animate move. Ideally, load everything and THEN show new screen
+    item: {
+        // TODO: Swap item with someone
+        actions: ["pick up", "drop"]
+    },
 }
 
 function splitId(id) {
@@ -97,17 +106,27 @@ class Backend {
     }
     async get(thingId) {
         this.see(thingId);
-        const thing = (await this.ajax("/get", {thingId})).thing;
+        let thing = (await this.ajax("/get", {thingId})).thing;
         if (!thing) return thing;
-        thing.pictureUrl = (this.artCache[thingId] = this.artCache[thingId] || (await this.ajax("/art", {thingId})).pictureUrl);
-        thing.actions = PRESETS[thing.type].actions || [];
+        thing = {
+            ...PRESETS[thing.type],
+            ...thing,
+            actions: PRESETS[thing.type].actions || [],
+            pictureUrl: (this.artCache[thingId] = this.artCache[thingId] || (await this.ajax("/art", {thingId})).pictureUrl),
+            creationTime: new Date(thing.creationTime || thing.creation_time || 0),
+            updateTime: new Date(thing.updateTime || thing.creationTime || thing.creation_time || 0)
+        }
 
-        thing.creationTime = new Date(thing.creationTime || thing.creation_time || 0);
-        thing.updateTime = new Date(thing.updateTime || thing.creationTime || thing.creation_time || 0);
         const now = new Date();
         const daysSinceUpdate = (now - thing.updateTime)/1000.0/3600/24;
-        thing.afk = (thing.type == "person" && daysSinceUpdate > 1);
-        if (thing.afk) thing.type = "afk";
+
+        if (thing.type == "person") {
+            thing.inventory = await Promise.all(thing.contents.map(this.get.bind(this)));
+
+            thing.afk = daysSinceUpdate > 1;
+            if (thing.afk) thing.type = "afk";
+        }
+
         return thing;
     }
 }
@@ -130,6 +149,7 @@ class UI {
         this.choice = chooser.choose.bind(chooser);
         this.makeImage = easel.makeImage.bind(easel);
         this.draw = easel.draw.bind(easel);
+        this.cards = {};
     }
     add(e) {
         this.marker.before(e);
@@ -139,6 +159,17 @@ class UI {
     async displayPlace(place) {
         this.place.html(await this.thingCard(place));
     }
+    async updateThing(thing) {
+        const oldCard = this.cards[thing.id];
+        if (!oldCard) return;
+        const newCard = await this.thingCard(thing);
+        oldCard.replaceWith(newCard);
+        this.cards[thing.id] = newCard;
+    }
+    async removeThing(thing) {
+        this.cards[thing.id].remove();
+        delete this.cards[thing.id];
+    }
     async displayThing(thing) {
         const e = await this.thingCard(thing);
         if (thing.afk) {
@@ -147,6 +178,7 @@ class UI {
             this.afk.css("--cards", this.afk.children().length);
         } else this.marker.before(e);
         //scroll();
+        return this.cards[thing.id] = e;
     }
     async displayCrafting() {
         this.crafting.removeClass("hidden");
@@ -167,6 +199,7 @@ class UI {
         this.afk.children().remove();
         this.things.find(".thing").remove();
         this.place.children().remove();
+        this.cards = {};
     }
 
     // Template filler methods
@@ -184,14 +217,26 @@ class UI {
         canvas[0].width = canvas[0].height = 200;
         context.drawImage(image, 0, 0, canvas[0].width, canvas[0].height)
 
+        // Add inventory for a player
+        if (thing.inventory) {
+            const inventory = $(`<div class="inventory"></div>`)
+            for (let i=0; i<thing.inventory.length; i++) {
+                const itemCard = await this.thingCard(thing.inventory[i]);
+                inventory.append(itemCard);
+            }
+            card.append(inventory);
+        }
+
         // Add and bind action buttons
         const actions = card.find(".actions");
         for (let actionId of thing.actions||[]) {
             let name = actionId;
             if (actionId == "movePlayer") name = `move (${splitId(thing.targetId).name})`;
+            if (actionId == "drop" && !(thing.placeId == game.player.id)) continue;
+            if (actionId == "pick up" && !(thing.placeId == game.player.placeId)) continue;
 
             const actionE = $(`<input type="submit" class="action" value="${name}" />`);
-            actionE.on("click", () => { this.game.onAction(thing, action); });
+            actionE.on("click", () => { this.game.onAction(thing, actionId); });
             actions.append(actionE);
         }
         return card;
@@ -205,14 +250,14 @@ class Game {
 
         // Wait for actions, then do stuff. All async.
         this.craftBtn = div.find(".craft input");
-        for (let type of ["door", "scenery"]) {
+        for (let type of ["door", "scenery", "item"]) {
             div.find(`.craft-${type}`).on("click", () => this.craft({type}))
         }
     }
 
     async craft(thing = {}) {
         this.craftBtn.hide();
-        if (!thing.type) thing.type = await this.ui.choice("I want to make a new:", ["scenery", "door"], false);
+        if (!thing.type) thing.type = await this.ui.choice("I want to make a new:", ["scenery", "door", "item"], false);
         else this.ui.mention(`You are making a new ${thing.type}.`);
         thing = {
             ...deepcopy(PRESETS[thing.type]),
@@ -228,9 +273,14 @@ class Game {
                 thing.targetId = `place ${targetName}`
             } else this.ui.mention(`When someone goes from ${thing.name}, they will end up in ${thing.targetId}`);
         }
-        thing.pictureUrl = await this.ui.draw(thing.name);
 
-        if (thing.type != "place" && !thing.placeId) thing.placeId = this.player.placeId;
+        if (thing.type == "place") {}
+        else if (thing.type =="item") thing.placeId = this.player.id;
+        else if (!thing.placeId) thing.placeId = this.player.placeId;
+
+        // TOOD: Check if the target place is full
+
+        thing.pictureUrl = await this.ui.draw(thing.name);
 
         await this.backend.create(thing); // data update
         this.created(thing, thing.placeId); // visual update. no 'await' deliberately
@@ -239,24 +289,48 @@ class Game {
         this.craftBtn.show();
         return thing;
     }
+    async updateThingId(thingId) {
+        await this.ui.updateThing(await this.backend.get(thingId));
+    }
     async created(thing) { // Visual update
-        const placeId = thing.placeId;
         if (thing.type == "place") return;
 
         // Display new objects locally immediately. Everyone else has to leave and come back
-        if (!this.player || thing == this.player) {} // Part of making the player at the beginning, ignore
-        else if (this.player.placeId == placeId) await this.ui.displayThing(thing);
+        else if (!this.player || thing == this.player) {} // Part of making the player at the beginning, ignore
+        else if (this.player.placeId == thing.placeId) await this.ui.displayThing(thing);
+        else if (thing.placeId == this.player.id) await this.ui.updateThing(this.player);
     }
 
     async craftMissing(id) {
         return await this.craft(splitId(id)); // name, type
     }
+    async move(thing, placeId) {
+        // Does NOT visually update.
+        // Does NOT update the model of where it was moved from
+        const place = (await this.backend.get(placeId)) || (await this.craftMissing(placeId));
+        if (thing.type != "person" && place.contents.length >= place.maxContentsSize) {
+            throw `${place.name} (a ${place.type}) can only hold ${place.maxContentsSize} things`;
+        }
+        await this.backend.move(thing.id, placeId);
+        place.contents.push(thing.id); // Save an API call to update
+        thing.placeId = placeId; // Save an API call to update. Ignores updateTime.
+        return {place};
+    }
     async playerMove(placeId) {
-        this.place = (await this.backend.get(placeId)) || (await this.craftMissing(placeId));
-        await this.backend.move(this.player.id, placeId);
-        this.place.contents.push(this.player.id); // Save an API call to update
-        this.player.placeId = this.place.id; // Save an API call to update. Ignores updateTime.
+        this.place = (await this.move(this.player, placeId)).place;
         this.playerArrived();
+    }
+    async moveItem(item, toPlaceId) {
+        const fromPlaceId = item.placeId;
+
+        await this.move(item, toPlaceId);
+
+        if (fromPlaceId == this.place.id) this.ui.removeThing(item);
+        if (toPlaceId == this.place.id) this.ui.displayThing(item);
+
+        for (let placeId of [fromPlaceId, toPlaceId]) {
+            if (splitId(placeId).type == "person") await this.updateThingId(placeId);
+        }
     }
     async playerArrived() {
         this.ui.clear();
@@ -274,8 +348,14 @@ class Game {
         for (let thing of things) await this.ui.displayThing(thing);
         this.ui.displayCrafting();
     }
-    async onAction(thing, action) {
-        if (action == "movePlayer") this.playerMove(thing.targetId);
+    async onAction(thing, actionId) {
+        try {
+            if (actionId == "movePlayer") await this.playerMove(thing.targetId);
+            else if (actionId == "drop") await this.moveItem(thing, this.player.placeId);
+            else if (actionId == "pick up") await this.moveItem(thing, this.player.id);
+        } catch (error) {
+            debug(error);
+        }
     }
     checkNewVersion() {
         const lastVersion = localStorage.getItem("version") || 0;

@@ -31,10 +31,7 @@ class Easel {
                 strokeStyle: "#ffffff"
             }
         }[this.tool];
-        for (let [k, v] of Object.entries(tool)) {
-            console.log(tool, k, v, c);
-            c[k] = v;
-        }
+        for (let [k, v] of Object.entries(tool)) c[k] = v;
         c.beginPath();
         c.moveTo(mouse1.x, mouse1.y);
         c.lineTo(mouse2.x, mouse2.y);

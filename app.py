@@ -86,7 +86,7 @@ def ajax(route):
             if app.config["DEBUG"]:
                 # Add realistic delay
                 import time
-                time.sleep(0.5)
+                #time.sleep(0.5)
             try:
                 r = f(query, *a, **kw)
                 r["success"] = True
@@ -111,6 +111,8 @@ def add_to(placeId, thingId):
     place = objects.get(placeId)
     if not place:
         raise InvalidMove("Thing moved to place that doesn't exist")
+    if "contents" not in place:
+        place["contents"] = []
     if thingId not in place["contents"]:
         place["contents"].append(thingId)
     objects[placeId] = place

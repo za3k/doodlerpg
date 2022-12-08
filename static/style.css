@@ -62,8 +62,16 @@ nav > li.logged-in, .logged-in {
     border-radius: 20px;
     text-align: center;
     width: min-content;
-    height: 300px
+    height: 300px;
 }
+.card .name {
+    max-height: 1.5em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+    white-space: nowrap;
+}
+
 @media only screen and (min-width: 600px) {
     .card {
         margin-left: 5em;
@@ -96,6 +104,13 @@ nav > li.logged-in, .logged-in {
     height: 200px;
     /*border: 1px solid;*/
 }
+.inventory .thing canvas {
+    width: 50px;
+    height: 50px;
+}
+.inventory .thing .name {
+    max-width: 50px;
+}
 div.plus {
     height: 200px;
     width: 200px;
@@ -113,6 +128,7 @@ div.plus {
 }
 .person {
     background-color: rgba(0, 255, 0, 0.02);
+    height: auto;
 }
 .door {
     background-color: rgba(0, 0, 255, 0.02);
@@ -120,6 +136,17 @@ div.plus {
 .scenery {
     background-color: rgba(255, 255, 0, 0.02);
 }
+.item {
+    background-color: rgba(0, 255, 255, 0.02);
+}
+.inventory .card {
+    height: auto;
+    padding: 6px;
+    margin-left: 0;
+    margin-right: 2px;
+}
+.inventory .card:last-child { margin-right: 0; }
+/* .inventory:not(:empty) { width: 200px } */
 .afk-container {
     position: relative;
     display: inline-block;
