@@ -262,7 +262,7 @@ class Game {
             else debug("Thing is here but not created");
         }
         const TYPE_ORDER = ["place", "person", "scenery", "door", "afk"]
-        things.sort((a,b) => lexicalSort(a, b, x => [TYPE_ORDER.indexOf(x.type), new Date(x.creationTime), x.name]));
+        things.sort((a,b) => lexicalSort(a, b, x => [TYPE_ORDER.indexOf(x.type), (x.afk?-1:1) * new Date(x.creationTime), x.name]));
         for (let thing of things) await this.ui.displayThing(thing);
         this.ui.displayCrafting();
     }
