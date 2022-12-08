@@ -245,7 +245,8 @@ class Game {
     async playerMove(placeId) {
         this.place = (await this.backend.get(placeId)) || (await this.craftMissing(placeId));
         await this.backend.move(this.player.id, placeId);
-        this.player = await this.backend.get(this.player.id);
+        this.place.contents.push(this.player.id); // Save an API call to update
+        this.player.placeId = this.place.id; // Save an API call to update. Ignores updateTime.
         this.playerArrived();
     }
     async playerArrived() {
