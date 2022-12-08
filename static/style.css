@@ -99,17 +99,24 @@ nav > li.logged-in, .logged-in {
     }
 }
 
-.thing canvas {
+.card canvas {
     width: 200px;
     height: 200px;
+    display: block;
     /*border: 1px solid;*/
 }
-.inventory .thing canvas {
+.inventory .card canvas, .inventory .card .plus {
     width: 50px;
     height: 50px;
 }
-.inventory .thing .name {
+.inventory .card input[type=submit] {
     max-width: 50px;
+}
+.inventory .card .name {
+    max-width: 50px;
+}
+.inventory .craft:nth-child(n+4) {
+    display: none;
 }
 div.plus {
     height: 200px;
@@ -119,7 +126,7 @@ div.plus {
     background-size: contain;
     background-repeat: no-repeat;
 }
-.thing .actions {
+.card .actions {
     padding: 5px 0 5px 0;
     /*height: 30px;*/
 }

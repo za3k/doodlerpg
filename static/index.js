@@ -7,7 +7,7 @@ const VERSIONS = [
     { number: 0, features: ["you can report bugs", "afk players are hidden", "things are sorted"]},
     { number: 1, features: ["play on your phone", "'move' shows where to"]},
     { number: 2, features: ["draw on your phone (fixed)", "eraser"]},
-    { number: 3, features: ["make items", "hold 3 items", "move crafting buttons", "smoother brush"]},
+    { number: 3, features: ["make items", "hold 3 items", "move doodle buttons", "smoother brush"]},
 ]
 const feature_list = x => `<ol><li>${x.features.join("</li><li>")}</li></ol>`
 const VERSION = {
@@ -48,7 +48,6 @@ const PRESETS = {
     },
     scenery: { },
     // TODO: Give someone an item. Trade someone an item.
-    // TODO: move item-create plus-card inside your card
     // TODO: Animate pick up, drop, swap, and give
     // TODO: Animate move. Ideally, load everything and THEN show new screen
     item: {
@@ -222,14 +221,19 @@ class UI {
         context.drawImage(image, 0, 0, canvas[0].width, canvas[0].height)
 
         // Add inventory for a player
-        if (thing.inventory) {
+        if (thing.type == "person") {
             const inventory = $(`<div class="inventory"></div>`)
             for (let i=0; i<thing.inventory.length; i++) {
                 const itemCard = await this.thingCard(thing.inventory[i]);
                 inventory.append(itemCard);
             }
+            if (this.game.player.id == thing.id) {
+                const craftCard = this.craftCard("item", true);
+                inventory.append(craftCard);
+            }
             card.append(inventory);
         }
+
 
         // Add and bind action buttons
         const actions = card.find(".actions");
@@ -245,13 +249,13 @@ class UI {
         }
         return card;
     }
-    craftCard(type) {
+    craftCard(type, tiny) {
         const e = $(`<div class="card ${type} craft">
-            <div class="type">new ${type}</div>
+            <div class="type">${tiny ? type : `new ${type}`}</div>
             <div class="thing-image plus"></div>
             <div class="name">?</div>
             <div class="actions">
-                <input type="submit" value="doodle ${type}" class="craft-${type}">
+                <input type="submit" value="${tiny ? "draw" : `doodle ${type}`}" class="craft-${type}">
             </div>
         </div>`)
         e.on("click", () => this.game.craft({type}))
@@ -314,7 +318,11 @@ class Game {
         // Display new objects locally immediately. Everyone else has to leave and come back
         else if (!this.player || thing == this.player) {} // Part of making the player at the beginning, ignore
         else if (this.player.placeId == thing.placeId) await this.ui.displayThing(thing);
-        else if (thing.placeId == this.player.id) await this.ui.updateThing(this.player);
+        else if (thing.placeId == this.player.id) {
+            this.player.contents.push(thing.id);
+            this.player.inventory.push(thing);
+            await this.ui.updateThing(this.player);
+        }
     }
 
     async craftMissing(id) {
