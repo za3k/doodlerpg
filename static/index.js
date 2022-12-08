@@ -134,6 +134,7 @@ class UI {
         if (thing.afk) {
             e.css("--order", this.afk.children().length);
             this.afk.append(e);
+            this.afk.css("--cards", this.afk.children().length);
         } else this.marker.before(e);
         //scroll();
     }

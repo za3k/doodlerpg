@@ -82,7 +82,8 @@ nav > li.logged-in, .logged-in {
     }
     .afk-container {
         width: 224px;
-        height: 400px; /* Would really prefer this to be the actual height */
+        --cards: 0;
+        height: calc(min(var(--cards), 1) * (max(var(--cards), 5) * 20px + 280px));
     }
     #bug-reporter {
         top: 0;
