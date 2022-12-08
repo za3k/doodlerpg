@@ -1,7 +1,5 @@
 /* -- This specific Hack-A-Day project -- */
 
-/* TODO: Make mobile friendly */
-
 .error:not(:empty), .motd:not(:empty) {
     margin: 20px;
     background-color: pink;
@@ -84,7 +82,11 @@ nav > li.logged-in, .logged-in {
     }
     .afk-container {
         width: 224px;
-        height: 300px;
+        height: 400px; /* Would really prefer this to be the actual height */
+    }
+    #bug-reporter {
+        top: 0;
+        bottom: auto !IMPORTANT;
     }
 }
 
