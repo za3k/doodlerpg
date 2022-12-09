@@ -28,6 +28,7 @@ class Easel {
                 lineCap: "round",
             },
             eraser: {
+                // TODO: Drawing white is not the same as erasing. This is visible on afk players
                 lineWidth: 10,
                 strokeStyle: "#ffffff",
                 lineCap: "round",

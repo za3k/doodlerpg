@@ -69,6 +69,7 @@ function splitId(id) {
 class Set {
     constructor() { this.l = {}; }
     add(x) { this.l[x] = 1; }
+    has(x) { return !!this.l[x]; }
     get list() { return Object.keys(this.l); }
 }
 class Backend {
@@ -78,7 +79,7 @@ class Backend {
         // Load all keys on game start
         this.ajax("/things", {}).then(r => r.ids.forEach(this.see.bind(this)));
     }
-    getList(type) { return this.lists[type] = this.lists[type] || new Set(); }
+    getSet(type) { return this.lists[type] = this.lists[type] || new Set(); }
     async ajax(url, data) {
         return new Promise(success => {
             $.ajax({
@@ -97,7 +98,7 @@ class Backend {
     listAll(type) { return this.lists[type].list }
     see(id) {
         const type = splitId(id).type;
-        this.getList(type).add(id);
+        this.getSet(type).add(id);
     }
     async move(thingId, toPlaceId) {
         await this.ajax("/move", { thingId, toPlaceId });
@@ -300,40 +301,48 @@ class Game {
     async craft(thing = {}) {
         this.ui.toggleActions(false);
 
-        if (!thing.type) thing.type = await this.ui.choice("I want to make a new:", ["scenery", "door", "item"], false);
-        else this.ui.mention(`You are making a new ${thing.type}.`);
-        thing = {
-            ...deepcopy(PRESETS[thing.type]),
-            ...thing,
+        try {
+            if (!thing.type) thing.type = await this.ui.choice("I want to make a new:", ["scenery", "door", "item"], false);
+            else this.ui.mention(`You are making a new ${thing.type}.`);
+
+            thing = {
+                ...deepcopy(PRESETS[thing.type]),
+                ...thing,
+            }
+            if (thing.type == "place") {}
+            else if (thing.type =="item") thing.placeId = this.player.id;
+            else if (!thing.placeId) thing.placeId = this.player.placeId;
+
+            const place = await this.backend.get(thing.placeId)
+            this.assertCanAdd(thing, place)
+
+            if (!thing.name) {
+                do {
+                    thing.name = await this.ui.choice(`I'm making a ${thing.type} named:`, [], true)
+                } while (!this.checkValidName(thing.type, thing.name));
+            }
+            else this.ui.mention(`Your ${thing.type} is named ${thing.name}`);
+            thing.id = `${thing.type} ${thing.name}`;
+
+            if (thing.type == "door") {
+                if (!thing.targetId) {
+                    const targetName = await this.ui.choice(`When someone goes through ${thing.name}, they should end up in: `, this.backend.listAll("place").map((id) => splitId(id).name), true);
+                    thing.targetId = `place ${targetName}`
+                } else this.ui.mention(`When someone goes from ${thing.name}, they will end up in ${thing.targetId}`);
+            }
+
+            thing.pictureUrl = await this.ui.draw(thing.name, thing.type=="item"&&2);
+
+            // Data update
+            await this.backend.create(thing);
+
+            // Visual update
+            this.ui.clearMentions();
+            await this.created(thing, thing.placeId);
+            return thing;
+        } finally {
+            this.ui.toggleActions(true);
         }
-        if (!thing.name) thing.name = await this.ui.choice(`I'm making a ${thing.type} named:`, [], true)
-        else this.ui.mention(`Your ${thing.type} is named ${thing.name}`);
-        thing.id = `${thing.type} ${thing.name}`;
-
-        if (thing.type == "door") {
-            if (!thing.targetId) {
-                const targetName = await this.ui.choice(`When someone goes through ${thing.name}, they should end up in: `, this.backend.listAll("place").map((id) => splitId(id).name), true);
-                thing.targetId = `place ${targetName}`
-            } else this.ui.mention(`When someone goes from ${thing.name}, they will end up in ${thing.targetId}`);
-        }
-
-        if (thing.type == "place") {}
-        else if (thing.type =="item") thing.placeId = this.player.id;
-        else if (!thing.placeId) thing.placeId = this.player.placeId;
-
-        // TODO: Check if the target place is full
-
-        thing.pictureUrl = await this.ui.draw(thing.name, thing.type=="item"&&2);
-
-        // Data update
-        await this.backend.create(thing);
-            
-        // Visual update
-        this.ui.clearMentions();
-        this.ui.toggleActions(true);
-        await this.created(thing, thing.placeId);
-
-        return thing;
     }
     async created(thing) { // Visual update
         if (thing.type == "place") return;
@@ -351,12 +360,24 @@ class Game {
     async craftMissing(id) {
         return await this.craft(splitId(id)); // name, type
     }
+    assertCanAdd(thing, toPlace) {
+        const canAdd = thing.type == "person" || toPlace.contents.length < toPlace.maxContentsSize;
+        if (!canAdd) throw `${toPlace.name} (a ${toPlace.type}) can only hold ${toPlace.maxContentsSize} things`;
+    }
+    assertValidName(type, name) {
+        const id = `${type} ${name}`;
+        if (name == "") throw `Names can't be blank`;
+        else if (this.backend.getSet(type).has(id)) throw `Somewhere in the doodleverse, something already has that name. Please come up with an original name.`;
+        else if (name.length >= 200) throw `That name is WAY too long, buddy.`;
+    }
+    checkValidName(type, name) {
+        try { this.assertValidName(type, name); return true; }
+        catch (e) { debug(e); return false; }
+    }
     async move(thing, toPlaceId, noLimit) {
         const fromPlaceId = thing.placeId;
         const toPlace = (await this.backend.get(toPlaceId)) || (await this.craftMissing(toPlaceId));
-        if (!noLimit && thing.type != "person" && toPlace.contents.length >= toPlace.maxContentsSize) {
-            throw `${toPlace.name} (a ${toPlace.type}) can only hold ${toPlace.maxContentsSize} things`;
-        }
+        if (!noLimit) this.assertCanAdd(thing, toPlace);
         await this.backend.move(thing.id, toPlaceId);
 
         // Model updates for toPlace, fromPlace, thing.
