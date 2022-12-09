@@ -177,7 +177,7 @@ class UI {
         else await this.displayThing(thing);
     }
     async displayCraft(craft) {
-        const e = this.craftCard(craft.type);
+        const e = this.craftCard(craft.type, false, game.place.id);
         this.marker.before(e);
     }
     async displayThing(thing) {
@@ -241,7 +241,7 @@ class UI {
                 inventory.append(itemCard);
             }
             if (this.game.player.id == thing.id) {
-                const craftCard = this.craftCard("item", true);
+                const craftCard = this.craftCard("item", true, thing.id);
                 inventory.append(craftCard);
             }
             card.append(inventory);
@@ -281,10 +281,10 @@ class UI {
             </div>
         </div>`);
     }
-    craftCard(type, tiny) {
+    craftCard(type, tiny, placeId) {
         const e = this.actionCard(type, "?", tiny ? "draw" : `doodle ${type}`);
         e.on("click", () => {
-            this.game.craft({type}).then(thing => {
+            this.game.craft({type, placeId}).then(thing => {
                 this.scrollTo(thing.id)
             })
         });
@@ -310,7 +310,6 @@ class Game {
                 ...thing,
             }
             if (thing.type == "place") {}
-            else if (thing.type =="item") thing.placeId = this.player.id;
             else if (!thing.placeId) thing.placeId = this.player.placeId;
 
             const place = await this.backend.get(thing.placeId)
