@@ -200,7 +200,7 @@ class UI {
         oldCard[0].scrollIntoView();
     }
     toggleActions(enabled) {
-        this.div.find(".action").toggleClass("hidden", enabled);
+        this.div.find(".action").toggleClass("hidden", !enabled);
     }
 
     mention(text) {
