@@ -192,8 +192,8 @@ def get_ajax(json):
     thing = objects.get(thingId)
     if thing is not None:
         del thing["pictureUrl"]
-    for x in ["maxContentsSize", "actions"]:
-        if x in thing: del thing[x]
+        for x in ["maxContentsSize", "actions"]:
+            if x in thing: del thing[x]
     return {"thingId": thingId, "thing":thing}
 
 @app.ajax("/things")
