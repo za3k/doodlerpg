@@ -1,6 +1,6 @@
 #!/bin/python3
 import flask, flask_login
-from flask import url_for, request, render_template, redirect, send_from_directory
+from flask import url_for, request, render_template, redirect, send_from_directory, make_response
 from flask_login import current_user
 import json, random, hashlib, functools, string, re
 from datetime import datetime
@@ -206,18 +206,19 @@ def getAllPlaces(json, type):
 @app.route(PREFIX+"/dump")
 def dump():
     global db_dicts
-    s = "<pre>"
-    s+="DICTS = {}\n".format(repr(sorted(db_dicts)))
-    for d in sorted(db_dicts):
-        if d=="users" and not (app.config["DEBUG"] or current_user.id == "zachary"):
-            continue
-        db = DBDict(d, debug=True)
-        replacements = {
-            "password": lambda x: "XXX",
-            "pictureUrl": lambda x: x[:21]+"...",
-        }
-        identity = lambda x: x
-
-        s+="{}={{\n{}\n}}\n".format(d, "\n".join("  {}: {}".format(repr(k),repr({a: replacements.get(a, identity)(b) for a,b in v.items()})) for k,v in db.items()))
-    s+="</pre>"
-    return s
+    include_all = bool(flask.request.args.get('all'))
+    def sanatize(value):
+        if not include_all:
+            value = {k:v for k,v in value.items() if k not in ['pictureUrl']}
+        value = {k:v for k,v in value.items() if k not in ['password']} #never dump passwords
+        return value
+    ret = {
+        db_dict: {
+            k:sanatize(v) for k,v in DBDict(db_dict, debug=True).items()
+        } for db_dict in db_dicts if db_dict!="users" or app.config["DEBUG"] or current_user.id=="zachary"
+    }
+    response = make_response(json.dumps(ret, indent=2, sort_keys=True, default=str))
+    response.headers['Content-Type'] = 'application/json; charset=utf-8'
+    response.headers['mimetype'] = 'application/json'
+    response.status_code = 200
+    return response
