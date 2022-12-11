@@ -206,27 +206,16 @@ div.plus {
     display: block;
     padding: 20px;
     width: min-content;
+    position: absolute;
+    left: 0px;
 }
 
 .easel canvas {
-    --size: calc(min(100vw, 100vh) - 40px);
+    --size: calc(min(100vw, 100vh) - 100px);
     width: var(--size);
     height: var(--size);
     border: 1px solid;
     user-select: none;
-}
-
-@media only screen and (max-width: 500px) {
-    .easel {
-        position: absolute;
-        left: 0px;
-    }
-}
-@media only screen and (min-width: 500px) {
-    .easel canvas {
-        width: 400px;
-        height: 400px;
-    }
 }
 
 .easel div {
