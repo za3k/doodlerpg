@@ -103,9 +103,13 @@ nav > li.logged-in, .logged-in {
         --max-cards: 3;
         width: 222px;
     }
+}
+@media only screen and (orientation:portrait) {
     #bug-reporter {
+        position: fixed;
         top: 0;
-        bottom: auto !IMPORTANT;
+        right: 0;
+        bottom: inherit !IMPORTANT;
     }
 }
 
