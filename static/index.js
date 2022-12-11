@@ -108,6 +108,7 @@ class Backend {
         await this.ajax("/create", thing);
     }
     async get(thingId) {
+        if (!thingId) return
         this.see(thingId);
         let thing = (await this.ajax("/get", {thingId})).thing;
         if (!thing) return thing;
@@ -360,7 +361,7 @@ class Game {
         return await this.craft(splitId(id)); // name, type
     }
     assertCanAdd(thing, toPlace) {
-        const canAdd = thing.type == "person" || toPlace.contents.length < toPlace.maxContentsSize;
+        const canAdd = !toPlace || thing.type == "person" || toPlace.contents.length < toPlace.maxContentsSize;
         if (!canAdd) throw `${toPlace.name} (a ${toPlace.type}) can only hold ${toPlace.maxContentsSize} things`;
     }
     assertValidName(type, name) {
