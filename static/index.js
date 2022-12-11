@@ -34,10 +34,6 @@ function lexicalSort(a, b, key_func) {
     return 0;
 }
 
-function capitalizeFirstLetter(str) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
 const PRESETS = {
     place: {
         contents: [],
@@ -229,7 +225,7 @@ class UI {
     }
     async thingCard(thing) {
         // Make the base card
-        const card = $(`<div class="thing dcard ${thing.type}"><div class="type">${capitalizeFirstLetter(thing.type)}</div><canvas class="thing-image"></canvas><div class="name">${thing.name}</div><div class="actions"></div></div>`);
+        const card = $(`<div class="thing dcard ${thing.type}"><div class="type">${thing.type}</div><canvas class="thing-image"></canvas><div class="name">${thing.name}</div><div class="actions"></div></div>`);
 
         // Draw the picture
         const image = await this.makeImage(thing.pictureUrl);
@@ -278,7 +274,7 @@ class UI {
     }
     actionCard(type, name, action) {
         return $(`<div class="dcard ${type} action">
-            <div class="type">${capitalizeFirstLetter(type)}</div>
+            <div class="type">${type}</div>
             <div class="thing-image plus"></div>
             <div class="name">${name}</div>
             <div class="actions">

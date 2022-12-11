@@ -176,7 +176,6 @@ div.plus {
 
 .dcard .actions {
     padding: 5px 0 5px 0;
-    /*height: 30px;*/
 }
 
 .place {
@@ -189,8 +188,7 @@ div.plus {
 }
 
 .afk {
-    height: 392px;
-    /* Max height of a person */
+    height: 409px; /* Max height of a person */
 }
 
 .door {
@@ -203,7 +201,6 @@ div.plus {
 
 .item {
     background-color: rgb(250, 255, 255);
-    /*rgba(0, 255, 255, 0.02);*/
 }
 
 .inventory .dcard {
@@ -217,7 +214,6 @@ div.plus {
     margin-right: 0;
 }
 
-/* .inventory:not(:empty) { width: 200px } */
 .stack {
     position: relative;
     display: inline-block;
