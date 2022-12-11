@@ -3,11 +3,13 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Doodle RPG</title>
     <link rel="stylesheet" href="static/style.css">
-    <link rel="stylesheet" href="static/css/bootstrap.css">
+    <link rel="stylesheet" href="static/css/bootstrap.min.css">
 
     <script src="login.js"></script>
+    <script src="static/js/bootstrap.bundle.min.js"></script>
     <script src="static/js/jquery-3.6.1.js"></script>
     <script src="static/easel.js"></script>
     <script src="static/index.js"></script>
@@ -15,16 +17,27 @@
 </head>
 
 <body>
-    <div class="container">
-        <nav class="navbar navbar-default">
+    <div class="container-fluid" style="padding-top: 60px;">
+        <nav class="navbar navbar-expand-lg fixed-top navbar-dark bg-dark">
             <div class="container-fluid">
-            <div class="navbar-brand navbar-brand-link"><a href=".">Doodle RPG</a></div>
-            <ul class="nav navbar-nav">
-                <li><a href="https://github.com/za3k/doodlerpg">about</a></li>
-            </ul>
-            <ul class="nav navbar-nav navbar-right">
-                <li class="logged-in"><a href="logout">Log Out (<span class="my-username">{USER}</span>)</a></li>
-            </ul>
+                <a class="navbar-brand" href="#">Doodle RPG</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link" href="https://github.com/za3k/doodlerpg" target="_blank">About</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="makeReporter(0); document.getElementById('bug-reporter').style.display='block';">Report Bug</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="logged-in nav-link" href="logout">Log Out <span class="text-muted"> (<span class="my-username">{USER}</span>)</span></a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
         </nav>
 
         <header class="logged-out">

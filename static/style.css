@@ -1,6 +1,7 @@
 /* -- This specific Hack-A-Day project -- */
 
-.error:not(:empty), .motd:not(:empty) {
+.error:not(:empty),
+.motd:not(:empty) {
     opacity: 1;
     height: auto;
     margin: 20px;
@@ -9,17 +10,29 @@
     border-radius: 10px;
     padding: 10px;
 }
+
 .error:not(:empty) {
     animation: fadeout 10s;
     visibility: hidden;
 }
+
 .motd:not(:empty) {
     background-color: lightblue;
 }
+
 @keyframes fadeout {
-    0% { opacity: 1; visibility: visible; }
-    90% { opacity: 1; }
-    100% { opacity: 0; }
+    0% {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    90% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
 }
 
 .content form {
@@ -29,12 +42,14 @@
 .chooser input {
     margin-top: 1px;
 }
+
 .chooser input[type=submit] {
     margin-top: 10px;
 }
 
 
-nav > li.logged-in, .logged-in {
+nav>li.logged-in,
+.logged-in {
     display: none;
 }
 
@@ -43,16 +58,18 @@ nav > li.logged-in, .logged-in {
     text-align: center;
     margin-top: 20px;
 }
-.place-container > * {
+
+.place-container>* {
     display: inline-block;
 }
 
-.thing-container > * {
+.thing-container>* {
     margin-bottom: 20px;
     vertical-align: top;
 }
 
-.crafting .hidden, .action .hidden {
+.crafting .hidden,
+.action .hidden {
     display: none;
 }
 
@@ -66,7 +83,7 @@ nav > li.logged-in, .logged-in {
     font-family: lucida;
 }
 
-.card {
+.dcard {
     border: 1px solid lightgrey;
     display: inline-block;
     padding: 10px;
@@ -75,7 +92,8 @@ nav > li.logged-in, .logged-in {
     width: min-content;
     height: 300px;
 }
-.card .name {
+
+.dcard .name {
     max-height: 1.5em;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -84,26 +102,31 @@ nav > li.logged-in, .logged-in {
 }
 
 @media only screen and (min-width: 600px) {
-    .card {
+    .dcard {
         margin-left: 5em;
     }
-    header, .content {
+
+    header {
         margin-left: 40px !IMPORTANT;
     }
+
     .stack {
         --max-cards: 5;
         width: calc(222px + (20px * (var(--max-cards)-1)));
     }
 }
+
 @media only screen and (max-width: 600px) {
     .thing-container {
         text-align: center;
     }
+
     .stack {
         --max-cards: 3;
         width: 222px;
     }
 }
+
 @media only screen and (orientation:portrait) {
     #bug-reporter {
         position: fixed;
@@ -113,66 +136,87 @@ nav > li.logged-in, .logged-in {
     }
 }
 
-.card canvas {
+.dcard canvas {
     width: 200px;
     height: 200px;
     display: block;
     /*border: 1px solid;*/
 }
-.inventory .card canvas, .inventory .card .plus {
+
+.inventory .dcard canvas,
+.inventory .dcard .plus {
     width: 50px;
     height: 50px;
 }
-.inventory .card .type {
+
+.inventory .dcard .type {
     display: none;
 }
-.inventory .card input[type=submit] {
+
+.inventory .dcard input[type=submit] {
     max-width: 50px;
 }
-.inventory .card .name {
+
+.inventory .dcard .name {
     max-width: 50px;
 }
+
 .inventory .action:nth-child(n+4) {
     display: none;
 }
+
 div.plus {
     height: 200px;
     width: 200px;
     filter: opacity(10%) blur(2px);
-    background-image:url(image/plus.svg);
+    background-image: url(image/plus.svg);
     background-size: contain;
     background-repeat: no-repeat;
 }
-.card .actions {
+
+.dcard .actions {
     padding: 5px 0 5px 0;
     /*height: 30px;*/
 }
+
 .place {
     background-color: rgb(255, 250, 250);
 }
+
 .person {
     background-color: rgb(250, 255, 250);
     height: auto;
 }
+
 .afk {
-    height: 392px; /* Max height of a person */
+    height: 392px;
+    /* Max height of a person */
 }
+
 .door {
     background-color: rgb(250, 250, 255);
 }
+
 .scenery {
     background-color: rgb(255, 255, 250);
 }
+
 .item {
-    background-color: rgb(250, 255, 255); /*rgba(0, 255, 255, 0.02);*/
+    background-color: rgb(250, 255, 255);
+    /*rgba(0, 255, 255, 0.02);*/
 }
-.inventory .card {
+
+.inventory .dcard {
     height: auto;
     padding: 6px;
     margin-left: 0;
     margin-right: 2px;
 }
-.inventory .card:last-child { margin-right: 0; }
+
+.inventory .dcard:last-child {
+    margin-right: 0;
+}
+
 /* .inventory:not(:empty) { width: 200px } */
 .stack {
     position: relative;
@@ -181,27 +225,31 @@ div.plus {
     --cards: 0;
     margin-bottom: calc(min(var(--cards), 1) * ((max(var(--cards), var(--max-cards)) - 1) * 20px));
 }
+
 .afk {
     background-color: rgb(200, 200, 200);
     position: absolute;
     border-width: 2px;
     border-color: #ddd;
 }
-.afk .card {
+
+.afk .dcard {
     background-color: rgb(220, 220, 220);
 }
 
-.stack > .card {
+.stack>.dcard {
     left: calc(20px * min(var(--order), var(--max-cards) - 1));
     top: calc(20px * min(var(--order), var(--max-cards) - 1));
-    z-index: calc(5 - var(--order) );
+    z-index: calc(5 - var(--order));
     box-shadow: 2px 2px 0px 0px rgb(0 0 0 / 40%);
 }
-.card.afk:hover {
-    z-index:7;
+
+.dcard.afk:hover {
+    z-index: 7;
 }
 
-.easel:not(.enabled), .chooser:not(.enabled) {
+.easel:not(.enabled),
+.chooser:not(.enabled) {
     display: none;
 }
 
@@ -249,10 +297,12 @@ div.plus {
 .about {
     white-space: pre-wrap;
 }
+
 .footer {
-    background-color: rgba(0,0,0,0.2);
+    background-color: rgba(0, 0, 0, 0.2);
     margin-top: 20px;
 }
+
 .footer ul {
     list-style: none;
     padding-left: 5px;
@@ -261,6 +311,7 @@ div.plus {
 .navbar-brand-link a {
     color: #777;
 }
+
 .navbar-brand-link a:hover {
     color: #000;
     text-decoration: none;
@@ -275,7 +326,7 @@ input[type=number] {
 
 input[type=number]::-webkit-inner-spin-button {
     opacity: 1;
-    background: rgba(0,0,0,0);
+    background: rgba(0, 0, 0, 0);
     width: 24px;
     margin-left: 10px;
 }
@@ -284,6 +335,7 @@ input[type=number]::-webkit-inner-spin-button {
     display: flex;
     flex-flow: row nowrap;
 }
+
 .vflex {
     display: flex;
     flex-flow: column nowrap;
@@ -293,14 +345,23 @@ input[type=number]::-webkit-inner-spin-button {
 .fullscreen nav.navbar {
     margin-bottom: 0;
 }
+
 .fullscreen div.container {
     margin: 0;
     padding: 0;
     width: 100%;
 }
+
 .fullscreen .footer {
     margin-top: 0;
 }
-html.fullscreen, .fullscreen body, .fullscreen .container {
+
+html.fullscreen,
+.fullscreen body,
+.fullscreen .container {
     height: 100%;
+}
+
+#bug-reporter {
+    display: none;
 }

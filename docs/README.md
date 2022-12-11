@@ -9,6 +9,14 @@ The Doodle-verse is a universe that YOU create. It is a relaxing coloring book f
 ## Source
 Doodle RPG is open-source. You can read how it works on [github](https://github.com/za3k/doodlerpg) if you're curious. Or feel free to add new features and make it look nicer!
 
+### Running Yourself
+```bash
+virtualenv -p $(which python3) venv 
+./venv/bin/activate      
+pip install -r requirements.txt
+flask run
+```
+
 ## Feedback
 I love hearing from players. Please feel free to [email me](https://za3k.com) or use github's bug reporting feature.
 

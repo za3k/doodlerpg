@@ -34,6 +34,10 @@ function lexicalSort(a, b, key_func) {
     return 0;
 }
 
+function capitalizeFirstLetter(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
 const PRESETS = {
     place: {
         contents: [],
@@ -198,7 +202,7 @@ class UI {
         let oldCard = this.cards[thingId];
         if (!oldCard) return;
         // Scroll to the top-level card.
-        while (oldCard.is(".inventory .card")) oldCard = oldCard.parents(".card").first();
+        while (oldCard.is(".inventory .dcard")) oldCard = oldCard.parents(".dcard").first();
         oldCard[0].scrollIntoView();
     }
     toggleActions(enabled) {
@@ -214,7 +218,7 @@ class UI {
     clear() {
         this.mentions.children().remove();
         this.afk.children().remove();
-        this.things.find(".card").remove();
+        this.things.find(".dcard").remove();
         this.place.children().remove();
         this.cards = {};
     }
@@ -225,7 +229,7 @@ class UI {
     }
     async thingCard(thing) {
         // Make the base card
-        const card = $(`<div class="thing card ${thing.type}"><div class="type">${thing.type}</div><canvas class="thing-image"></canvas><div class="name">${thing.name}</div><div class="actions"></div></div>`);
+        const card = $(`<div class="thing dcard ${thing.type}"><div class="type">${capitalizeFirstLetter(thing.type)}</div><canvas class="thing-image"></canvas><div class="name">${thing.name}</div><div class="actions"></div></div>`);
 
         // Draw the picture
         const image = await this.makeImage(thing.pictureUrl);
@@ -264,7 +268,7 @@ class UI {
                 card.find(".inventory").append(actionCard);
 
             } else {
-                const actionE = $(`<input type="submit" class="action" value="${name}" />`);
+                const actionE = $(`<input type="submit" class="action btn btn-secondary btn-sm" value="${name}" />`);
                 actionE.on("click", () => { this.game.onAction(thing, actionId); });
                 actions.append(actionE);
             }
@@ -273,12 +277,12 @@ class UI {
         return card;
     }
     actionCard(type, name, action) {
-        return $(`<div class="card ${type} action">
-            <div class="type">${type}</div>
+        return $(`<div class="dcard ${type} action">
+            <div class="type">${capitalizeFirstLetter(type)}</div>
             <div class="thing-image plus"></div>
             <div class="name">${name}</div>
             <div class="actions">
-                <input type="submit" value="${action}">
+                <input type="submit" value="${action}" class="btn btn-secondary btn-sm">
             </div>
         </div>`);
     }
