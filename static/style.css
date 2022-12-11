@@ -211,7 +211,7 @@ div.plus {
 }
 
 .easel canvas {
-    --size: calc(min(100vw, 100vh) - 100px);
+    --size: calc(min(100vw, 100vh - 80px) - 20px);
     width: var(--size);
     height: var(--size);
     border: 1px solid;
