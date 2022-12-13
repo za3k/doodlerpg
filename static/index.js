@@ -7,7 +7,7 @@ const VERSIONS = [
     { number: 1, features: ["play on your phone", "'move' shows where to"]},
     { number: 2, features: ["draw on your phone (fixed)", "eraser"]},
     { number: 3, features: ["make items", "hold 3 items", "give and trade items", "move doodle buttons", "smoother brush"]},
-    { number: 4, features: ["less text", "show artists"]},
+    { number: 4, features: ["less text", "show artists", "new style"]},
 ]
 const feature_list = x => `<ol><li>${x.features.join("</li><li>")}</li></ol>`
 const VERSION = {
@@ -268,7 +268,7 @@ class UI {
                 card.find(".inventory").append(actionCard);
 
             } else {
-                const actionE = $(`<input type="submit" class="btn btn-secondary btn-sm action" value="${name}" />`);
+                const actionE = $(`<input type="submit" class="action" value="${name}" />`);
                 actionE.on("click", () => { this.game.onAction(thing, actionId); });
                 actions.append(actionE);
             }
@@ -277,12 +277,12 @@ class UI {
         return card;
     }
     actionCard(type, name, action) {
-        return $(`<div class="dcard ${type} action">
+        return $(`<div class="dcard ${type} action-card">
             <div class="type">${type}</div>
             <div class="thing-image plus"></div>
             <div class="name">${name}</div>
             <div class="actions">
-                <input type="submit" value="${action}" class="btn btn-secondary btn-sm action">
+                <input type="submit" value="${action}" class="action">
             </div>
         </div>`);
     }

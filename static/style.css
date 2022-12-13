@@ -164,8 +164,35 @@ nav>li.logged-in,
     max-width: 50px;
 }
 
-.inventory .action:nth-child(n+4) {
+.inventory .action-card:nth-child(n+4) {
     display: none;
+}
+
+.action {
+    cursor: pointer;
+    color: #212529;
+    background-color: #f8f9fa;
+    border: 1px solid #dae0e5;
+    display: inline-block;
+    font-weight: 400;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    user-select: none;
+    padding: 0.25rem 0.5rem;
+    font-size: .845rem;
+    border-radius: 0.2rem;
+    line-height: 1.5;
+    transition:
+      color .15s ease-in-out,
+      background-color .15s ease-in-out
+      border-color .15s ease-in-out,
+      box-shadow .15s ease-in-out;
+}
+.action:hover {
+    color: #212529;
+    background-color: #dae0e5;
+    border-color: #dae0e5;
 }
 
 div.plus {
