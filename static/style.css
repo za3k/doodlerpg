@@ -169,6 +169,7 @@ nav>li.logged-in,
 }
 
 .action {
+    /* copied from bootstrap 5*/
     cursor: pointer;
     color: #212529;
     background-color: #f8f9fa;

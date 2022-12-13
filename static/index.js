@@ -230,7 +230,8 @@ class UI {
     }
     async thingCard(thing) {
         // Make the base card
-        const card = $(`<div class="thing dcard ${thing.type}"><div class="type">${thing.type}</div><img class="thing-image"></canvas><div class="name">${thing.name}</div><div class="actions"></div></div>`);
+        const typeReplace = { "afk": "person (asleep)" };
+        const card = $(`<div class="thing dcard ${thing.type}"><div class="type">${typeReplace[thing.type]||thing.type}</div><img class="thing-image"></canvas><div class="name">${thing.name}</div><div class="actions"></div></div>`);
 
         // Draw the picture
         const image = $(await this.makeImage(thing.pictureUrl));
