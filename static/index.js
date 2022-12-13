@@ -1,13 +1,13 @@
 'use strict';
 
 // TODO: Remove bootstrap vibes at top
-// TODO: Name checks, room fullness checks should be on client to fail faster
 
 const VERSIONS = [
     { number: 0, features: ["you can report bugs", "afk players are hidden", "things are sorted"]},
     { number: 1, features: ["play on your phone", "'move' shows where to"]},
     { number: 2, features: ["draw on your phone (fixed)", "eraser"]},
     { number: 3, features: ["make items", "hold 3 items", "give and trade items", "move doodle buttons", "smoother brush"]},
+    { number: 4, features: ["less text", "show artists"]},
 ]
 const feature_list = x => `<ol><li>${x.features.join("</li><li>")}</li></ol>`
 const VERSION = {
@@ -51,11 +51,11 @@ const PRESETS = {
     },
     scenery: { },
     // TODO: Quest: challenge the world to draw a thing
-    // TODO: Animate pick up, drop, swap, and give
+    // TODO: Animate take, drop, swap, and give
     // TODO: Animate move. Ideally, load everything and THEN show new screen
     // TODO: Allow drag+drop? Probably not.
     item: {
-        actions: ["pick up", "drop", "trade"]
+        actions: ["take", "drop", "trade"]
     },
 }
 
@@ -107,12 +107,17 @@ class Backend {
         this.see(thing.id);
         await this.ajax("/create", thing);
     }
+    async update(thing) {
+        this.see(thing.id);
+        await this.ajax("/update", thing.originalThing);
+    }
     async get(thingId) {
         if (!thingId) return
         this.see(thingId);
         let thing = (await this.ajax("/get", {thingId})).thing;
         if (!thing) return thing;
         thing = {
+            originalThing: thing,
             ...PRESETS[thing.type],
             ...thing,
             actions: PRESETS[thing.type].actions || [],
@@ -225,14 +230,13 @@ class UI {
     }
     async thingCard(thing) {
         // Make the base card
-        const card = $(`<div class="thing dcard ${thing.type}"><div class="type">${thing.type}</div><canvas class="thing-image"></canvas><div class="name">${thing.name}</div><div class="actions"></div></div>`);
+        const card = $(`<div class="thing dcard ${thing.type}"><div class="type">${thing.type}</div><img class="thing-image"></canvas><div class="name">${thing.name}</div><div class="actions"></div></div>`);
 
         // Draw the picture
-        const image = await this.makeImage(thing.pictureUrl);
-        const canvas = card.find("canvas");
-        const context = canvas[0].getContext("2d");
-        canvas[0].width = canvas[0].height = 200;
-        context.drawImage(image, 0, 0, canvas[0].width, canvas[0].height)
+        const image = $(await this.makeImage(thing.pictureUrl));
+        image.addClass("thing-image");
+        card.find("img").replaceWith(image);
+        image.prop("title", `"${thing.name}" by ${ thing.creator || "anonymous"}`);
 
         // Add inventory for a player (but not afk players)
         if (thing.type == "person" || thing.type == "afk") {
@@ -254,12 +258,12 @@ class UI {
             let name = actionId;
             if (actionId == "movePlayer") name = `move (${splitId(thing.targetId).name})`;
             if (actionId == "drop" && !(thing.placeId == game.player.id)) continue;
-            if (actionId == "pick up" && !(thing.placeId == game.player.placeId)) continue;
+            if (actionId == "take" && !(thing.placeId == game.player.placeId)) continue;
             if (actionId == "give" && !(thing.id != game.player.id)) continue;
             if (actionId == "trade" && !(splitId(thing.placeId).type == "person" && thing.placeId != game.player.id)) continue;
 
             if (actionId == "give" && thing.inventory) {
-                const actionCard = this.actionCard("item", "?", "give")
+                const actionCard = this.actionCard("item", "", "give")
                     .on("click", () => { this.game.onAction(thing, actionId); });
                 card.find(".inventory").append(actionCard);
 
@@ -283,7 +287,7 @@ class UI {
         </div>`);
     }
     craftCard(type, tiny, placeId) {
-        const e = this.actionCard(type, "?", tiny ? "draw" : `doodle ${type}`);
+        const e = this.actionCard(type, "", tiny ? "draw" : `doodle ${type}`);
         e.on("click", () => {
             this.game.craft({type, placeId}).then(thing => {
                 this.scrollTo(thing.id)
@@ -449,7 +453,7 @@ class Game {
         try {
             if (actionId == "movePlayer") await this.move(this.player, thing.targetId);
             else if (actionId == "drop") await this.move(thing, this.player.placeId);
-            else if (actionId == "pick up") await this.move(thing, this.player.id);
+            else if (actionId == "take") await this.move(thing, this.player.id);
             else if (actionId == "give") await this.giveToPerson(thing);
             else if (actionId == "trade") await this.tradeFor(thing);
         } catch (error) {
@@ -468,7 +472,12 @@ class Game {
         const yourId = `person ${window.userId}`;
         const firstRoomId = PRESETS.person.placeId;
         //const firstRoom = await this.backend.get(firstRoomId) || await this.craft({type: "place", name: splitId(firstRoomId).name}); // Needed for the very first player only.
-        this.player = await this.backend.get(yourId) || await this.craft({type: "person", placeId: firstRoomId, name: window.userId});
+        if (this.player = await this.backend.get(yourId)) {
+            await this.backend.update(this.player); // Update timestamp
+        } else {
+            this.player = await this.craft({type: "person", placeId: firstRoomId, name: window.userId});
+        }
+
         this.place = await this.backend.get(this.player.placeId) || await this.craftMissing(this.player.placeId);
         this.playerArrived();
     }

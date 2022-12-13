@@ -93,8 +93,12 @@ nav>li.logged-in,
     height: 300px;
 }
 
+.dcard .type {
+    /*color: rgba(0,0,0, 0.2);*/
+}
+
 .dcard .name {
-    max-height: 1.5em;
+    height: 1.5em;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 200px;
@@ -136,14 +140,14 @@ nav>li.logged-in,
     }
 }
 
-.dcard canvas {
+.dcard .thing-image {
     width: 200px;
     height: 200px;
     display: block;
     /*border: 1px solid;*/
 }
 
-.inventory .dcard canvas,
+.inventory .dcard .thing-image,
 .inventory .dcard .plus {
     width: 50px;
     height: 50px;
@@ -165,10 +169,14 @@ nav>li.logged-in,
     display: none;
 }
 
+.dcard.action .type {
+    /*visibility: hidden;*/
+}
+
 div.plus {
     height: 200px;
     width: 200px;
-    filter: opacity(10%) blur(2px);
+    filter: opacity(5%) blur(2px);
     background-image: url(image/plus.svg);
     background-size: contain;
     background-repeat: no-repeat;
@@ -185,10 +193,6 @@ div.plus {
 .person {
     background-color: rgb(250, 255, 250);
     height: auto;
-}
-
-.afk {
-    height: 409px; /* Max height of a person */
 }
 
 .door {
@@ -210,6 +214,10 @@ div.plus {
     margin-right: 2px;
 }
 
+.inventory .dcard .name {
+    display: none;
+}
+
 .inventory .dcard:last-child {
     margin-right: 0;
 }
@@ -223,6 +231,7 @@ div.plus {
 }
 
 .afk {
+    height: 385px; /* Max height of a person */
     background-color: rgb(200, 200, 200);
     position: absolute;
     border-width: 2px;
