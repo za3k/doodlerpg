@@ -268,7 +268,7 @@ class UI {
                 card.find(".inventory").append(actionCard);
 
             } else {
-                const actionE = $(`<input type="submit" class="action btn btn-secondary btn-sm" value="${name}" />`);
+                const actionE = $(`<input type="submit" class="btn btn-secondary btn-sm action" value="${name}" />`);
                 actionE.on("click", () => { this.game.onAction(thing, actionId); });
                 actions.append(actionE);
             }
@@ -282,7 +282,7 @@ class UI {
             <div class="thing-image plus"></div>
             <div class="name">${name}</div>
             <div class="actions">
-                <input type="submit" value="${action}" class="btn btn-secondary btn-sm">
+                <input type="submit" value="${action}" class="btn btn-secondary btn-sm action">
             </div>
         </div>`);
     }

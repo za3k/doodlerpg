@@ -68,9 +68,8 @@ nav>li.logged-in,
     vertical-align: top;
 }
 
-.crafting .hidden,
-.action .hidden {
-    display: none;
+.hidden {
+    display: none !IMPORTANT;
 }
 
 .mention {
@@ -169,10 +168,6 @@ nav>li.logged-in,
     display: none;
 }
 
-.dcard.action .type {
-    /*visibility: hidden;*/
-}
-
 div.plus {
     height: 200px;
     width: 200px;
@@ -228,6 +223,9 @@ div.plus {
     height: 396px;
     --cards: 0;
     margin-bottom: calc(min(var(--cards), 1) * ((max(var(--cards), var(--max-cards)) - 1) * 20px));
+}
+.stack:empty {
+    display: none;
 }
 
 .afk {
