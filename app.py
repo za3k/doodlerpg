@@ -138,6 +138,19 @@ def move(thingId, toPlaceId):
     objects[thingId] = thing # Save object
     return thing
 
+@app.ajax("/update")
+def update_ajax(thing):
+    thingId = thing.get("id")
+    thing = objects.get(thingId)
+    if not thingId or not thing:
+        raise InvalidUpdate("Trying to update a thing that doesn't exist")
+
+    if thing.get("type") == "person" and thing.get("name") == current_user.id:
+        thing["updateTime"] = datetime.now()
+        objects[thingId] = thing
+        return thing
+    else:
+        raise InvalidUpdate("Trying to update something you don't have permission to update")
 @app.ajax("/create")
 def create_ajax(thing):
     thingId = thing["id"]
