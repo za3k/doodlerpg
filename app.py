@@ -6,7 +6,7 @@ import json, random, hashlib, functools, string, re
 from datetime import datetime
 from db import DBDict, db_dicts
 
-PREFIX="/doodlerpg"
+PREFIX=""
 app = flask.Flask(__name__,
     static_url_path = PREFIX + "/static"
 )

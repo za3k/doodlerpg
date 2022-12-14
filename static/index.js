@@ -91,7 +91,7 @@ class Backend {
     async ajax(url, data) {
         return new Promise(success => {
             $.ajax({
-                url: `/doodlerpg${url}`,
+                url,
                 method: "POST",
                 data: JSON.stringify(data),
                 dataType: 'json',
