@@ -85,7 +85,7 @@ nav>li.logged-in,
 .dcard {
     border: 1px solid lightgrey;
     display: inline-block;
-    padding: 10px;
+    padding: 10px 10px 0 10px;
     border-radius: 20px;
     text-align: center;
     width: min-content;
@@ -148,6 +148,8 @@ nav>li.logged-in,
 
 .inventory {
     position: relative;
+    height: 64px;
+    margin-bottom: 4px;
 }
 
 .inventory .dcard.zoom {
@@ -272,7 +274,7 @@ div.plus {
 }
 
 .afk {
-    height: 385px; /* Max height of a person */
+    height: 314px; /* Max height of a person */
     background-color: rgb(200, 200, 200);
     position: absolute;
     border-width: 2px;

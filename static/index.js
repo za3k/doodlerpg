@@ -303,7 +303,7 @@ class UI {
             <div class="thing-image plus"></div>
             <div>
                 <span class="name">${name}</span>
-                <span class="type">${type}</span>
+                <span class="type">make ${type}</span>
             </div>
             <div class="actions">
                 <input type="submit" value="${action}" class="action">
@@ -313,7 +313,7 @@ class UI {
         return card;
     }
     craftCard(type, tiny, placeId) {
-        const e = this.actionCard(type, "", tiny ? "draw" : `doodle`);
+        const e = this.actionCard(type, "", "draw");
         e.on("click", () => {
             this.game.craft({type, placeId}).then(thing => {
                 this.scrollTo(thing.id)
