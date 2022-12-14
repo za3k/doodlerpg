@@ -263,7 +263,7 @@ class UI {
         const image = $(await this.makeImage(thing.pictureUrl));
         image.addClass("thing-image");
         card.find("img").replaceWith(image);
-        image.prop("title", `"${thing.name}" by ${ thing.creator || "anonymous"}`);
+        image.prop("title", `"${thing.name}" by ${ thing.creator}`);
         image.on("click", this.zoom);
 
         // Edit button

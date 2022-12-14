@@ -206,35 +206,6 @@ def get_ajax(json):
     thingId = json["thingId"]
     thing = objects.get(thingId)
     if thing is not None:
-        for x in ["maxContentsSize", "actions"]:
-            if x in thing:
-                del thing[x]
-                objects[thingId] = thing
-                print("Deleting {} from {}".format(x, thingId))
-        for k1, k2 in {
-            "creation_time": "creationTime",
-        }.items():
-            if k1 in thing:
-                thing[k2] = thing[k1]
-                del thing[k1]
-                objects[thingId] = thing
-                print("Renaming {}->{} in {}".format(k1, k2, thingId))
-        if "contents" not in thing and thing["type"] in ["place", "person"]:
-            thing["contents"] = []
-            objects[thingId] = thing
-            print("Adding contents to {}".format(thingId))
-        if "creator" not in thing:
-            thing["creator"] = "anonymous"
-            objects[thingId] = thing
-            print("Adding creator to {}".format(thingId))
-        if "creationTime" not in thing:
-            thing["creationTime"] = datetime.fromtimestamp(0)
-            objects[thingId] = thing
-            print("Adding creation timestamp to {}".format(thingId))
-        if "updateTime" not in thing:
-            thing["updateTime"] = thing["creationTime"]
-            objects[thingId] = thing
-            print("Adding update timestamp to {}".format(thingId))
         del thing["pictureUrl"]
     return {"thingId": thingId, "thing":thing}
 
