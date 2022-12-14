@@ -343,7 +343,7 @@ div.plus {
 }
 
 .easel canvas {
-    --size: calc(min(100vw - 40px, 100vh - 160px));
+    --size: calc(min(100vw - 40px, 100vh - 164px));
     width: var(--size);
     height: var(--size);
     border: 1px solid;
@@ -354,6 +354,7 @@ div.plus {
     width: 100%;
     text-align: center;
     font-size: 16pt;
+    max-height: 32px;
 }
 
 .tool {
