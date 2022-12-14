@@ -26,12 +26,13 @@ class Easel {
                 lineWidth: 5,
                 strokeStyle: "#000000",
                 lineCap: "round",
+                globalCompositeOperation: "destination-over",
             },
             eraser: {
-                // TODO: Drawing white is not the same as erasing. This is visible on afk players
                 lineWidth: 10,
                 strokeStyle: "#ffffff",
                 lineCap: "round",
+                globalCompositeOperation: "destination-out",
             }
         }[this.tool];
         for (let [k, v] of Object.entries(tool)) c[k] = v;
