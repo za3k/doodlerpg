@@ -167,6 +167,10 @@ nav>li.logged-in,
     display: none;
 }
 
+.inventory .dcard:not(.zoom) .actions {
+    display: none;
+}
+
 .inventory .dcard:not(.zoom) input[type=submit] {
     max-width: 50px;
 }

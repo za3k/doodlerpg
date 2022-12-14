@@ -235,6 +235,12 @@ class UI {
     mentionCard(text) {
         return $(`<span class="mention">${text}</span>`);
     }
+    zoom(ev) {
+        const card = $(ev.target).parents(".dcard").first();
+        const zoomed = card.hasClass("zoom");
+        $(".zoom").removeClass("zoom");
+        card.toggleClass("zoom", !zoomed);
+    }
     async thingCard(thing) {
         // Make the base card
         const typeReplace = { "afk": "sleeping" };
@@ -252,13 +258,7 @@ class UI {
         image.addClass("thing-image");
         card.find("img").replaceWith(image);
         image.prop("title", `"${thing.name}" by ${ thing.creator || "anonymous"}`);
-        const zoom = () => {
-            const zoomed = card.hasClass("zoom");
-            $(".zoom").removeClass("zoom");
-            card.toggleClass("zoom", !zoomed);
-        };
-        image.on("click", zoom);
-        //card.hover(zoom);
+        image.on("click", this.zoom);
 
         // Add inventory for a player (but not afk players)
         if (thing.type == "person" || thing.type == "afk") {
@@ -285,8 +285,8 @@ class UI {
             if (actionId == "trade" && !(splitId(thing.placeId).type == "person" && thing.placeId != game.player.id)) continue;
 
             if (actionId == "give" && thing.inventory) {
-                const actionCard = this.actionCard("item", "", "give")
-                    .on("click", () => { this.game.onAction(thing, actionId); });
+                const actionCard = this.actionCard("item", "", "give");
+                actionCard.find(".action").on("click", () => { this.game.onAction(thing, actionId); });
                 card.find(".inventory").append(actionCard);
 
             } else {
@@ -299,7 +299,7 @@ class UI {
         return card;
     }
     actionCard(type, name, action) {
-        return $(`<div class="dcard ${type} action-card">
+        const card = $(`<div class="dcard ${type} action-card">
             <div class="thing-image plus"></div>
             <div>
                 <span class="name">${name}</span>
@@ -309,6 +309,8 @@ class UI {
                 <input type="submit" value="${action}" class="action">
             </div>
         </div>`);
+        card.find(".thing-image").on('click', this.zoom);
+        return card;
     }
     craftCard(type, tiny, placeId) {
         const e = this.actionCard(type, "", tiny ? "draw" : `doodle`);
