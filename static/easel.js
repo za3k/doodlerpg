@@ -11,7 +11,11 @@ class Easel {
         this.enabled = false;
         this.canvas.height = this.jcanvas.width();
         this.canvas.width = this.jcanvas.height();
-        this.clearBtn.on("click", this.clear.bind(this));
+        this.dirty = true;
+        this.clearBtn.on("click", () => {
+            if (this.dirty && !window.confirm("Really delete your drawing?")) return;
+            this.clear();
+        });
         this.toolBtn.on("click", this.toggleTool.bind(this));
         this.tool = "pencil";
     }
@@ -21,6 +25,7 @@ class Easel {
     }
     line(mouse1, mouse2) {
         // assumes mouse (pixel) and canvas coordinates are the same, which they are here.
+        this.dirty = true;
         const c = this.canvas.getContext("2d");
         const tool = {
             pencil: {
@@ -52,6 +57,7 @@ class Easel {
     clear() {
         const c = this.canvas.getContext("2d");
         c.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.dirty = false;
     }
     enable() {
         this.div.toggleClass("enabled", true);
@@ -113,6 +119,7 @@ class Easel {
                 done(data);
             });
             this.cancel.on("click", () => {
+                if (this.dirty && !window.confirm("Really cancel, deleting your drawing?")) return;
                 this.done.off("click");
                 this.cancel.off("click");
                 this.disable();
