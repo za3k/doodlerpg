@@ -11,7 +11,7 @@ class Easel {
         this.enabled = false;
         this.canvas.height = this.jcanvas.width();
         this.canvas.width = this.jcanvas.height();
-        this.dirty = true;
+        this._dirty = false;
         this.clearBtn.on("click", () => {
             if (this.dirty && !window.confirm("Really delete your drawing?")) return;
             this.clear();
@@ -58,6 +58,12 @@ class Easel {
         const c = this.canvas.getContext("2d");
         c.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.dirty = false;
+    }
+    get dirty() { return this._dirty; }
+    set dirty(v) {
+        this._dirty = v;
+        this.cancel.toggleClass("hidden", v);
+        this.clearBtn.toggleClass("hidden", !v);
     }
     enable() {
         this.div.toggleClass("enabled", true);
