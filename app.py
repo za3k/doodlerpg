@@ -27,13 +27,13 @@ class User(flask_login.UserMixin):
         user.id = username
         return user
     def register(username, password):
-        # TODO: Prevent name collision with existing game object
         # TODO: 'normal' characters only
-        # TODO: Allow editing your artwork
         # TODO: Salt and hash passwords
         if username in users:
             if password == users[username]['password']:
                 return user
+            return None
+        if username in ["anonymous", "zachary"]:
             return None
         users[username]={'password': password}
         return User.get(username, password)
@@ -139,16 +139,18 @@ def move(thingId, toPlaceId):
     return thing
 
 @app.ajax("/update")
-def update_ajax(thing):
-    thingId = thing.get("id")
-    thing = objects.get(thingId)
-    if not thingId or not thing:
+def update_ajax(newThing):
+    thingId = newThing.get("id")
+
+    oldThing = objects.get(thingId)
+    if not thingId or not oldThing:
         raise InvalidUpdate("Trying to update a thing that doesn't exist")
 
-    if thing.get("type") == "person" and thing.get("name") == current_user.id:
-        thing["updateTime"] = datetime.now()
-        objects[thingId] = thing
-        return thing
+    if oldThing.get("type") == "person" and oldThing.get("name") == current_user.id:
+        newThing["pictureUrl"] = newThing.get("pictureUrl", oldThing["pictureUrl"])
+        newThing["updateTime"] = datetime.now()
+        objects[thingId] = newThing
+        return newThing
     else:
         raise InvalidUpdate("Trying to update something you don't have permission to update")
 @app.ajax("/create")
@@ -204,9 +206,36 @@ def get_ajax(json):
     thingId = json["thingId"]
     thing = objects.get(thingId)
     if thing is not None:
-        del thing["pictureUrl"]
         for x in ["maxContentsSize", "actions"]:
-            if x in thing: del thing[x]
+            if x in thing:
+                del thing[x]
+                objects[thingId] = thing
+                print("Deleting {} from {}".format(x, thingId))
+        for k1, k2 in {
+            "creation_time": "creationTime",
+        }.items():
+            if k1 in thing:
+                thing[k2] = thing[k1]
+                del thing[k1]
+                objects[thingId] = thing
+                print("Renaming {}->{} in {}".format(k1, k2, thingId))
+        if "contents" not in thing and thing["type"] in ["place", "person"]:
+            thing["contents"] = []
+            objects[thingId] = thing
+            print("Adding contents to {}".format(thingId))
+        if "creator" not in thing:
+            thing["creator"] = "anonymous"
+            objects[thingId] = thing
+            print("Adding creator to {}".format(thingId))
+        if "creationTime" not in thing:
+            thing["creationTime"] = datetime.fromtimestamp(0)
+            objects[thingId] = thing
+            print("Adding creation timestamp to {}".format(thingId))
+        if "updateTime" not in thing:
+            thing["updateTime"] = thing["creationTime"]
+            objects[thingId] = thing
+            print("Adding update timestamp to {}".format(thingId))
+        del thing["pictureUrl"]
     return {"thingId": thingId, "thing":thing}
 
 @app.ajax("/things")

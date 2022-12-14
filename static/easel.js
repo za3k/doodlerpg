@@ -9,8 +9,8 @@ class Easel {
         this.tools = div.find(".tool");
         this.thing = div.find(".name");
         this.enabled = false;
-        this.canvas.height = this.jcanvas.width();
-        this.canvas.width = this.jcanvas.height();
+        this.canvas.height = 400;
+        this.canvas.width = 400;
         this._dirty = false;
         this.clearBtn.on("click", () => {
             if (this.dirty && !window.confirm("Really delete your drawing?")) return;
@@ -23,7 +23,7 @@ class Easel {
     }
     mouse(ev) {
         const rect = this.canvas.getBoundingClientRect()
-        return { x: ev.clientX - rect.left, y: ev.clientY - rect.top }
+        return { x: (ev.clientX - rect.left)/rect.width*this.canvas.width, y: (ev.clientY - rect.top)/rect.height*this.canvas.height }
     }
     line(mouse1, mouse2) {
         // assumes mouse (pixel) and canvas coordinates are the same, which they are here.
@@ -59,6 +59,18 @@ class Easel {
         const c = this.canvas.getContext("2d");
         c.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.dirty = false;
+    }
+    loadArt(dataUrl) {
+        const c = this.canvas.getContext("2d");
+        this.dirty = true;
+        return new Promise(done => {
+            const imageObj = new Image();
+            imageObj.onload = () => {
+                c.drawImage(imageObj, 0, 0, this.canvas.width, this.canvas.height);
+                done();
+            }
+            imageObj.src = dataUrl;
+        });
     }
     get dirty() { return this._dirty; }
     set dirty(v) {
@@ -111,12 +123,13 @@ class Easel {
         $(document).off("mouseup");
         this.jcanvas.off("mousemove");
     }
-    draw(thing, thicknessMultiplier) {
+    draw(thing, thicknessMultiplier, oldArt) {
         this.thicknessMultiplier = thicknessMultiplier || 1;
         return new Promise((done) => {
             this.thing.text(thing);
             this.clear();
-            this.enable();
+            if (oldArt) this.loadArt(oldArt).then(this.enable.bind(this));
+            else this.enable();
             
             this.done.on("click", () => {
                 this.done.off("click");

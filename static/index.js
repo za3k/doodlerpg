@@ -6,6 +6,7 @@ const VERSIONS = [
     { number: 2, features: ["draw on your phone (fixed)", "eraser"]},
     { number: 3, features: ["make items", "hold 3 items", "give and trade items", "move doodle buttons", "smoother brush"]},
     { number: 4, features: ["zoom tiny items", "read less", "hover for artist", "cancel", "stop accidentally deleting drawings"]},
+    { number: 5, features: ["edit your person", "same brush size for everyone"]},
 ]
 const feature_list = x => `<ol><li>${x.features.join("</li><li>")}</li></ol>`
 const VERSION = {
@@ -105,6 +106,7 @@ class Backend {
     listAll(type) { return this.lists[type].list }
     see(id) {
         const type = splitId(id).type;
+        this.getSet("all").add(id);
         this.getSet(type).add(id);
     }
     async move(thingId, toPlaceId) {
@@ -118,6 +120,10 @@ class Backend {
         this.see(thing.id);
         await this.ajax("/update", thing.data);
     }
+    modify(thing, prop, newVal) {
+        thing[prop] = thing.data[prop] = newVal;
+        if (prop=="pictureUrl") this.artCache[thing.id] == newVal;
+    }
     async get(thingId) {
         if (!thingId) return
         this.see(thingId);
@@ -129,8 +135,8 @@ class Backend {
             ...thing,
             pictureUrl: (this.artCache[thingId] = this.artCache[thingId] || (await this.ajax("/art", {thingId})).pictureUrl),
             ...OVERRIDES[thing.type]||{},
-            creationTime: new Date(thing.creationTime || thing.creation_time || 0),
-            updateTime: new Date(thing.updateTime || thing.creationTime || thing.creation_time || 0)
+            creationTime: new Date(thing.creationTime),
+            updateTime: new Date(thing.updateTime)
         }
 
         const now = new Date();
@@ -260,6 +266,18 @@ class UI {
         image.prop("title", `"${thing.name}" by ${ thing.creator || "anonymous"}`);
         image.on("click", this.zoom);
 
+        // Edit button
+        if (game.editable(thing)) {
+            const editButton = $(`<img class="edit-button" src="static/image/pencil.svg"/>`);
+            editButton.on("click", () => {
+                this.game.edit(thing).then((thing) => {
+                    this.updateThing(thing);
+                    this.scrollTo(thing.id);
+                })
+            });
+            card.prepend(editButton);
+        }
+
         // Add inventory for a player (but not afk players)
         if (thing.type == "person" || thing.type == "afk") {
             const inventory = $(`<div class="inventory"></div>`)
@@ -328,7 +346,6 @@ class Game {
         this.backend = new Backend();
         this.ui = new UI(div, this);
     }
-
     async craft(thing = {}) {
         this.ui.toggleActions(false);
 
@@ -378,6 +395,14 @@ class Game {
             this.ui.toggleActions(true);
         }
     }
+    async edit(thing) {
+        const pictureUrl = await this.ui.draw(thing.name, thing.type=="item"&&2, thing.pictureUrl);
+        if (!pictureUrl) return;
+        this.backend.modify(thing, "pictureUrl", pictureUrl);
+        await this.backend.update(thing);
+
+        return thing;
+    }
     async created(thing) { // Visual update
         if (thing.type == "place") return;
 
@@ -393,6 +418,9 @@ class Game {
 
     async craftMissing(id) {
         return await this.craft(splitId(id)); // name, type
+    }
+    editable(thing) {
+        return this.player && this.player.id == thing.id;
     }
     assertCanAdd(thing, toPlace) {
         const canAdd = !toPlace || thing.type == "person" || toPlace.contents.length < toPlace.maxContentsSize;
@@ -445,6 +473,7 @@ class Game {
         await this.ui.displayPlace(this.place);
 
         const things = [];
+        if (this.place.name == "everywhere") this.place.contents = this.backend.getSet("all").list; // Easter egg / testing
         for (let thingPromise of this.place.contents.map(this.backend.get.bind(this.backend))) {
             // Load each one in order, but requests go in parallel.
             const thing = await thingPromise;
