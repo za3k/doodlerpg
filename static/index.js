@@ -1,13 +1,11 @@
 'use strict';
 
-// TODO: Remove bootstrap vibes at top
-
 const VERSIONS = [
     { number: 0, features: ["you can report bugs", "afk players are hidden", "things are sorted"]},
     { number: 1, features: ["play on your phone", "'move' shows where to"]},
     { number: 2, features: ["draw on your phone (fixed)", "eraser"]},
     { number: 3, features: ["make items", "hold 3 items", "give and trade items", "move doodle buttons", "smoother brush"]},
-    { number: 4, features: ["less text", "show artists", "new style"]},
+    { number: 4, features: ["less text", "show artists", "new style", "zoom to see tiny items"]},
 ]
 const feature_list = x => `<ol><li>${x.features.join("</li><li>")}</li></ol>`
 const VERSION = {
@@ -238,6 +236,13 @@ class UI {
         image.addClass("thing-image");
         card.find("img").replaceWith(image);
         image.prop("title", `"${thing.name}" by ${ thing.creator || "anonymous"}`);
+        const zoom = () => {
+            const zoomed = card.hasClass("zoom");
+            $(".zoom").removeClass("zoom");
+            card.toggleClass("zoom", !zoomed);
+        };
+        image.on("click", zoom);
+        //card.hover(zoom);
 
         // Add inventory for a player (but not afk players)
         if (thing.type == "person" || thing.type == "afk") {

@@ -146,25 +146,36 @@ nav>li.logged-in,
     /*border: 1px solid;*/
 }
 
-.inventory .dcard .thing-image,
-.inventory .dcard .plus {
+.inventory {
+    position: relative;
+}
+
+.inventory .dcard.zoom {
+    position: absolute;
+    left: 0;
+    margin-left: 0;
+    z-index:2;
+}
+
+.inventory .dcard:not(.zoom) .thing-image,
+.inventory .dcard:not(.zoom) .plus {
     width: 50px;
     height: 50px;
 }
 
-.inventory .dcard .type {
+.inventory .dcard:not(.zoom) .type {
     display: none;
 }
 
-.inventory .dcard input[type=submit] {
+.inventory .dcard:not(.zoom) input[type=submit] {
     max-width: 50px;
 }
 
-.inventory .dcard .name {
+.inventory .dcard:not(.zoom) .name {
     max-width: 50px;
 }
 
-.inventory .action-card:nth-child(n+4) {
+.inventory .action-card:nth-child(n+4):not(.zoom) {
     display: none;
 }
 
@@ -230,18 +241,18 @@ div.plus {
     background-color: rgb(250, 255, 255);
 }
 
-.inventory .dcard {
+.inventory .dcard:not(.zoom) {
     height: auto;
     padding: 6px;
     margin-left: 0;
     margin-right: 2px;
 }
 
-.inventory .dcard .name {
+.inventory .dcard:not(.zoom) .name {
     display: none;
 }
 
-.inventory .dcard:last-child {
+.inventory .dcard:last-child:not(.zoom) {
     margin-right: 0;
 }
 
