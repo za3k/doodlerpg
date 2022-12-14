@@ -89,11 +89,11 @@ nav>li.logged-in,
     border-radius: 20px;
     text-align: center;
     width: min-content;
-    height: 300px;
+    height: 275px;
 }
 
 .dcard .type {
-    /*color: rgba(0,0,0, 0.2);*/
+    color: rgba(0,0,0, 0.4);
 }
 
 .dcard .name {

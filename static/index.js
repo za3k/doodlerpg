@@ -5,7 +5,7 @@ const VERSIONS = [
     { number: 1, features: ["play on your phone", "'move' shows where to"]},
     { number: 2, features: ["draw on your phone (fixed)", "eraser"]},
     { number: 3, features: ["make items", "hold 3 items", "give and trade items", "move doodle buttons", "smoother brush"]},
-    { number: 4, features: ["less text", "show artists", "new style", "zoom to see tiny items"]},
+    { number: 4, features: ["show artists", "tweak style", "zoom for tiny items"]},
 ]
 const feature_list = x => `<ol><li>${x.features.join("</li><li>")}</li></ol>`
 const VERSION = {
@@ -35,26 +35,35 @@ function lexicalSort(a, b, key_func) {
 const PRESETS = {
     place: {
         contents: [],
-        maxContentsSize: 50,
-    },
-    door: {
-        actions: ["movePlayer"],
     },
     person: {
         contents: [],
+        placeId: "place the first room",
+    },
+    // TODO: Quest: challenge the world to draw a thing
+}
+const OVERRIDES = {
+    place: {
+        maxContentsSize: 50,
+        actions: [],
+    },
+    scenery: {
+        actions: [],
+    },
+    door: {
+        // TODO: Animate move. Ideally, load everything and THEN show new screen
+        actions: ["movePlayer"],
+    },
+    person: {
         // TODO: Edit your own art
         maxContentsSize: 3,
-        placeId: "place the first room",
         actions: ["give"]
     },
-    scenery: { },
-    // TODO: Quest: challenge the world to draw a thing
-    // TODO: Animate take, drop, swap, and give
-    // TODO: Animate move. Ideally, load everything and THEN show new screen
-    // TODO: Allow drag+drop? Probably not.
     item: {
+        // TODO: Animate take, drop, swap, and give
+        // TODO: Allow drag+drop? Probably not.
         actions: ["take", "drop", "trade"]
-    },
+    }
 }
 
 function splitId(id) {
@@ -107,7 +116,7 @@ class Backend {
     }
     async update(thing) {
         this.see(thing.id);
-        await this.ajax("/update", thing.originalThing);
+        await this.ajax("/update", thing.data);
     }
     async get(thingId) {
         if (!thingId) return
@@ -115,11 +124,11 @@ class Backend {
         let thing = (await this.ajax("/get", {thingId})).thing;
         if (!thing) return thing;
         thing = {
-            originalThing: thing,
-            ...PRESETS[thing.type],
+            data: thing,
+            ...PRESETS[thing.type]||{},
             ...thing,
-            actions: PRESETS[thing.type].actions || [],
             pictureUrl: (this.artCache[thingId] = this.artCache[thingId] || (await this.ajax("/art", {thingId})).pictureUrl),
+            ...OVERRIDES[thing.type]||{},
             creationTime: new Date(thing.creationTime || thing.creation_time || 0),
             updateTime: new Date(thing.updateTime || thing.creationTime || thing.creation_time || 0)
         }
@@ -228,8 +237,15 @@ class UI {
     }
     async thingCard(thing) {
         // Make the base card
-        const typeReplace = { "afk": "person (asleep)" };
-        const card = $(`<div class="thing dcard ${thing.type}"><div class="type">${typeReplace[thing.type]||thing.type}</div><img class="thing-image"></canvas><div class="name">${thing.name}</div><div class="actions"></div></div>`);
+        const typeReplace = { "afk": "sleeping" };
+        const card = $(`<div class="thing dcard ${thing.type}">
+            <img class="thing-image"/>
+            <div>
+                <span class="name">${thing.name}</span>
+                <span class="type">(${typeReplace[thing.type]||thing.type})</span>
+            </div>
+            <div class="actions"></div>
+        </div>`);
 
         // Draw the picture
         const image = $(await this.makeImage(thing.pictureUrl));
@@ -284,16 +300,18 @@ class UI {
     }
     actionCard(type, name, action) {
         return $(`<div class="dcard ${type} action-card">
-            <div class="type">${type}</div>
             <div class="thing-image plus"></div>
-            <div class="name">${name}</div>
+            <div>
+                <span class="name">${name}</span>
+                <span class="type">${type}</span>
+            </div>
             <div class="actions">
                 <input type="submit" value="${action}" class="action">
             </div>
         </div>`);
     }
     craftCard(type, tiny, placeId) {
-        const e = this.actionCard(type, "", tiny ? "draw" : `doodle ${type}`);
+        const e = this.actionCard(type, "", tiny ? "draw" : `doodle`);
         e.on("click", () => {
             this.game.craft({type, placeId}).then(thing => {
                 this.scrollTo(thing.id)
