@@ -4,6 +4,7 @@ class Easel {
         this.jcanvas = div.find("canvas");
         this.canvas = this.jcanvas[0];
         this.done = div.find(".done");
+        this.cancel = div.find(".cancel");
         this.clearBtn = div.find(".clear");
         this.toolBtn = div.find(".tool");
         this.thing = div.find(".name");
@@ -106,9 +107,16 @@ class Easel {
             
             this.done.on("click", () => {
                 this.done.off("click");
+                this.cancel.off("click");
                 this.disable();
                 const data = this.canvas.toDataURL();
                 done(data);
+            });
+            this.cancel.on("click", () => {
+                this.done.off("click");
+                this.cancel.off("click");
+                this.disable();
+                done();
             });
         });
     }
@@ -127,6 +135,7 @@ class Chooser { // TODO: Make mobile friendly
     constructor(div) {
         this.div = div;
         this.done = div.find(".done");
+        this.cancel = div.find(".cancel");
         this.custom = div.find("input.custom");
         this.select = div.find("select");
         this.or = div.find(".or");
@@ -163,12 +172,19 @@ class Chooser { // TODO: Make mobile friendly
             
             const over = () => {
                 this.div.toggleClass("enabled", false);
-                done(this.getAnswer());
                 this.custom.off("keydown");
-            }
+                done(this.getAnswer());
+            };
+            const cancel = () => {
+                this.div.toggleClass("enabled", false);
+                this.custom.off("keydown");
+                done();
+            };
             this.done.on("click", over);
+            this.cancel.on("click", cancel);
             if (this.allowCustom) this.custom.on("keydown", (e) => {
-                if (e.which == 13) over();
+                if (e.key === "Escape") cancel();
+                if (e.key == "Enter") over();
             });
         });
     }

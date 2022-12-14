@@ -5,7 +5,7 @@ const VERSIONS = [
     { number: 1, features: ["play on your phone", "'move' shows where to"]},
     { number: 2, features: ["draw on your phone (fixed)", "eraser"]},
     { number: 3, features: ["make items", "hold 3 items", "give and trade items", "move doodle buttons", "smoother brush"]},
-    { number: 4, features: ["show artists", "tweak style", "zoom for tiny items"]},
+    { number: 4, features: ["zoom tiny items", "read less", "hover for artist"]},
 ]
 const feature_list = x => `<ol><li>${x.features.join("</li><li>")}</li></ol>`
 const VERSION = {
@@ -316,7 +316,7 @@ class UI {
         const e = this.actionCard(type, "", "draw");
         e.on("click", () => {
             this.game.craft({type, placeId}).then(thing => {
-                this.scrollTo(thing.id)
+                if (thing) this.scrollTo(thing.id);
             })
         });
         return e;
@@ -335,9 +335,10 @@ class Game {
         try {
             if (!thing.type) thing.type = await this.ui.choice("I want to make a new:", ["scenery", "door", "item"], false);
             else this.ui.mention(`You are making a new ${thing.type}.`);
+            if (!thing.type) return;
 
             thing = {
-                ...deepcopy(PRESETS[thing.type]),
+                ...deepcopy(PRESETS[thing.type]||{}),
                 ...thing,
             }
             if (thing.type == "place") {}
@@ -349,6 +350,7 @@ class Game {
             if (!thing.name) {
                 do {
                     thing.name = await this.ui.choice(`I'm making a ${thing.type} named:`, [], true)
+                    if (typeof(thing.name) == 'undefined') return;
                 } while (!this.checkValidName(thing.type, thing.name));
             }
             else this.ui.mention(`Your ${thing.type} is named ${thing.name}`);
@@ -357,11 +359,13 @@ class Game {
             if (thing.type == "door") {
                 if (!thing.targetId) {
                     const targetName = await this.ui.choice(`When someone goes through ${thing.name}, they should end up in: `, this.backend.listAll("place").map((id) => splitId(id).name), true);
+                    if (!targetName) return;
                     thing.targetId = `place ${targetName}`
                 } else this.ui.mention(`When someone goes from ${thing.name}, they will end up in ${thing.targetId}`);
             }
 
             thing.pictureUrl = await this.ui.draw(thing.name, thing.type=="item"&&2);
+            if (!thing.pictureUrl) return;
 
             // Data update
             await this.backend.create(thing);
@@ -407,6 +411,7 @@ class Game {
     async move(thing, toPlaceId, noLimit) {
         const fromPlaceId = thing.placeId;
         const toPlace = (await this.backend.get(toPlaceId)) || (await this.craftMissing(toPlaceId));
+        if (!toPlace) return;
         if (!noLimit) this.assertCanAdd(thing, toPlace);
         await this.backend.move(thing.id, toPlaceId);
 
@@ -456,6 +461,7 @@ class Game {
         if (person.contents.length >= person.maxContentsSize) throw `${person.name} (${person.type}) can only have ${person.maxContentsSize} things at a time`;
 
         const itemName = await this.ui.choice(`I want to give ${person.name} my: `, this.player.contents.map(id => splitId(id).name), false);
+        if (!itemName) return;
         for (let item of this.player.inventory) {
             if (item.name == itemName) this.move(item, person.id);
         }
@@ -466,6 +472,7 @@ class Game {
         const person = await this.backend.get(thing.placeId);
         if (person.type != "person") return;
         const itemName = await this.ui.choice(`In exchange for ${thing.name} I want to give ${person.name} my: `, this.player.contents.map(id => splitId(id).name), false);
+        if (!itemName) return;
         for (let item of this.player.inventory) {
             if (item.name == itemName) {
                 await this.move(thing, this.player.id, true);
@@ -501,10 +508,12 @@ class Game {
         if (this.player = await this.backend.get(yourId)) {
             await this.backend.update(this.player); // Update timestamp
         } else {
-            this.player = await this.craft({type: "person", placeId: firstRoomId, name: window.userId});
+            while(!this.player) {
+                this.player = await this.craft({type: "person", placeId: firstRoomId, name: window.userId});
+            }
         }
 
-        this.place = await this.backend.get(this.player.placeId) || await this.craftMissing(this.player.placeId);
+        while (!this.place) this.place = await this.backend.get(this.player.placeId) || await this.craftMissing(this.player.placeId);
         this.playerArrived();
     }
 }
