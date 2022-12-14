@@ -332,6 +332,17 @@ div.plus {
     font-size: 16pt;
 }
 
+.tool {
+    height: 32px;
+    width: 32px;
+}
+
+.tool-selected {
+    border: 2px red solid;
+    padding: 2px;
+    margin-left: 10px;
+}
+
 .chooser {
     font-size: 16pt;
     margin-bottom: 20px;

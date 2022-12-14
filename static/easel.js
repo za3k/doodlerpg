@@ -6,7 +6,7 @@ class Easel {
         this.done = div.find(".done");
         this.cancel = div.find(".cancel");
         this.clearBtn = div.find(".clear");
-        this.toolBtn = div.find(".tool");
+        this.tools = div.find(".tool");
         this.thing = div.find(".name");
         this.enabled = false;
         this.canvas.height = this.jcanvas.width();
@@ -16,7 +16,9 @@ class Easel {
             if (this.dirty && !window.confirm("Really delete your drawing?")) return;
             this.clear();
         });
-        this.toolBtn.on("click", this.toggleTool.bind(this));
+        this.tools.on("click", (ev) => {
+            this.toggleTool($(ev.target));
+        });
         this.tool = "pencil";
     }
     mouse(ev) {
@@ -48,11 +50,10 @@ class Easel {
         c.lineTo(mouse2.x, mouse2.y);
         c.stroke();
     }
-    toggleTool() {
-        const tools = ["pencil", "eraser"];
-        this.tool = tools[(tools.indexOf(this.tool)+1)%tools.length];
-        this.toolBtn[0].value = this.tool.slice(0,1).toUpperCase() + this.tool.slice(1);
-        for (let x of tools) this.toolBtn.toggleClass(x, this.tool == x);
+    toggleTool(toolElement) {
+        this.tool = toolElement.data("tool");
+        this.tools.removeClass("tool-selected");
+        toolElement.addClass("tool-selected");
     }
     clear() {
         const c = this.canvas.getContext("2d");

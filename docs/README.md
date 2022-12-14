@@ -18,7 +18,10 @@ flask run
 ```
 
 ## Feedback
-I love hearing from players. Please feel free to [email me](https://za3k.com) or use github's bug reporting feature.
+I love hearing from players. Please feel free to [email me](https://za3k.com) or use the bug reporting feature in the top menu.
 
 ### History
 Doodle RPG was originally called "Hack-An-MMO". I made it during a project called [Hack-A-Day](https://za3k.com/hackaday), where I tried to make one new project a day in November. Hack-An-MMO was the final project, on Day 30.
+
+### Credits
+- Pencil and eraser icons are from Twitter Bootstrap. They are MIT licensed.
