@@ -314,7 +314,7 @@ class UI {
     }
     craftCard(type, tiny, placeId) {
         const e = this.actionCard(type, "", "draw");
-        e.on("click", () => {
+        e.find(".action").on("click", () => {
             this.game.craft({type, placeId}).then(thing => {
                 if (thing) this.scrollTo(thing.id);
             })
