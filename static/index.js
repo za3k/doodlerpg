@@ -5,7 +5,7 @@ const VERSIONS = [
     { number: 1, features: ["play on your phone", "'move' shows where to"]},
     { number: 2, features: ["draw on your phone (fixed)", "eraser"]},
     { number: 3, features: ["make items", "hold 3 items", "give and trade items", "move doodle buttons", "smoother brush"]},
-    { number: 4, features: ["zoom tiny items", "read less", "hover for artist", "cancel drawing", "confirm before deleting a drawing"]},
+    { number: 4, features: ["zoom tiny items", "read less", "hover for artist", "cancel", "stop accidentally deleting drawings"]},
 ]
 const feature_list = x => `<ol><li>${x.features.join("</li><li>")}</li></ol>`
 const VERSION = {

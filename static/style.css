@@ -89,7 +89,15 @@ nav>li.logged-in,
     border-radius: 20px;
     text-align: center;
     width: min-content;
-    height: 275px;
+    min-height: 275px;
+    max-height: 300px;
+}
+
+.dcard.person,
+.dcard.afk,
+.inventory .dcard:not(.zoom) {
+    min-height: inherit;
+    max-height: inherit;
 }
 
 .dcard .type {
