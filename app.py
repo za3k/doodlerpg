@@ -2,7 +2,7 @@
 import flask, flask_login
 from flask import url_for, request, render_template, redirect, send_from_directory, make_response
 from flask_login import current_user
-import json, random, hashlib, functools, string, re
+import itertools, json, random, hashlib, functools, string, re
 from datetime import datetime
 from db import DBDict, db_dicts
 
@@ -33,7 +33,7 @@ class User(flask_login.UserMixin):
             if password == users[username]['password']:
                 return user
             return None
-        if username in ["anonymous", "zachary"]:
+        if username in ["anonymous", "zachary", ""]:
             return None
         users[username]={'password': password}
         return User.get(username, password)
@@ -208,6 +208,11 @@ def get_ajax(json):
     if thing is not None:
         del thing["pictureUrl"]
     return {"thingId": thingId, "thing":thing}
+
+@app.ajax("/sample")
+def get_sample(json):
+    thingIds = list(itertools.islice(objects, 10))
+    return {"thingIds":thingIds}
 
 @app.ajax("/things")
 def getAllThings(json):

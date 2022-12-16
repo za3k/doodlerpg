@@ -120,6 +120,10 @@ class Backend {
         this.see(thing.id);
         await this.ajax("/update", thing.data);
     }
+    async sample() {
+        const thingIds = (await this.ajax("/sample", {})).thingIds;
+        return await Promise.all(thingIds.map(this.get.bind(this)));
+    }
     modify(thing, prop, newVal) {
         thing[prop] = thing.data[prop] = newVal;
         if (prop=="pictureUrl") this.artCache[thing.id] == newVal;
@@ -545,6 +549,22 @@ class Game {
         while (!this.place) this.place = await this.backend.get(this.player.placeId) || await this.craftMissing(this.player.placeId);
         this.playerArrived();
     }
+    async wheel() {
+        const things = await this.backend.sample();
+        const wheel = $(".wheel");
+        for (let thing of things) {
+            const thingCard = await this.ui.thingCard(thing);
+            wheel.append(thingCard);
+        }
+        // Animate with JS instead of css
+        const rotationTime = Number(wheel.css("--dur"))*1000;
+        const ms = 10;
+        let elapsed = 0;
+        setInterval(() => {
+            elapsed = (elapsed + ms) % rotationTime;
+            wheel.find("> .dcard").css("--rotation", `${elapsed / rotationTime}turn`);
+        }, ms);
+    }
 }
 
 function mainLoggedIn() {
@@ -558,6 +578,8 @@ function mainLoggedIn() {
 function mainLoggedOut() {
     $(".logged-in").toggle(false);
     $(".logged-out").toggle(true);
+    let game = window.game = new Game($(".game"));
+    game.wheel();
 }
 
 (function() {
